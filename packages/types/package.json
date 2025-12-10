@@ -1,21 +1,18 @@
 {
-  "name": "db",
+  "name": "@exeness/types",
   "module": "index.ts",
   "type": "module",
   "private": true,
   "devDependencies": {
     "@types/bun": "latest"
   },
-"exports": {
-	"./client": "./index.ts"
-},
   "peerDependencies": {
     "typescript": "^5"
   },
+  "export":{
+    ".":"./index.ts"
+  },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.1.0",
-    "@prisma/client": "^7.1.0",
-    "dotenv": "^17.2.3",
-    "prisma": "^7.1.0"
+    "zod": "^4.1.13"
   }
 }
