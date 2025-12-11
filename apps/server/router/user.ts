@@ -4,10 +4,10 @@ import { v5 } from "uuid";
 import { USERS } from "../data/db";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { NAMESPACE, SALT_ROUND, SECRET } from "../lib/constant";
+import { usermiddleware } from "../middleware";
 export const userRouter = Router();
-const SALT_ROUND = 12;
-const SECRET="jwtsecrets"
-const NAMESPACE =process.env.USER_NAMESPACE_UUID ||"f0e1d2c3-b4a5-6789-9876-543210fedcba";
+
 userRouter.post("/signup", async (req, res) => {
   try {
     //get the user info
@@ -81,5 +81,12 @@ userRouter.post("/signin",async (req,res)=>{
     
 })
 
+userRouter.post("/balance",usermiddleware,(req,res)=>{
+    //@ts-ignore
+    const id=req.userid;
+return res.status(200).json({
+    userbalance:USERS[id]!.balance.balance
+})
+})
 
 
