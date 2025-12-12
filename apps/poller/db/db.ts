@@ -1,25 +1,17 @@
 import { Pool } from "pg";
+import { timeframes } from "../lib/types";
 
 export const pool = new Pool({
     connectionString: process.env.DATABASE_URL
 })
 
-const timeframes = [
-    { name: '1s', interval: '1 second' },
-    { name: '1m', interval: '1 minute' },
-    { name: '5m', interval: '5 minutes' },
-    { name: '15m', interval: '15 minutes' },
-    { name: '30m', interval: '30 minutes' },
-    { name: '1H', interval: '1 hour' },
-    { name: '1D', interval: '1 day' },
-    { name: '1W', interval: '1 week' },
-];
+
 
 const initDB = async () => {
     const client = await pool.connect();
 
     try {
-        // Create table and hypertable first (can be in transaction)
+        
         await client.query("BEGIN");
 
         await client.query(`
@@ -68,9 +60,9 @@ const initDB = async () => {
                 console.log(`View ${viewName} might already exist:`, e instanceof Error ? e.message : String(e));
             }
 
-            // Create refresh policy for each view with appropriate intervals
+         
             try {
-                // Determine appropriate policy intervals based on timeframe
+                
                 let startOffset, endOffset, scheduleInterval;
                 
                 switch (tf.name) {
@@ -132,7 +124,6 @@ const initDB = async () => {
             } catch (e) {
                 console.log(`Policy for ${viewName} might already exist:`, e instanceof Error ? e.message : String(e));
                 
-                // If policy already exists, try to manually refresh the view
                 try {
                     await client.query(`CALL refresh_continuous_aggregate('${viewName}', NULL, NULL);`);
                     console.log(`Manually refreshed ${viewName}`);

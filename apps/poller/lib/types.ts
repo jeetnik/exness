@@ -11,3 +11,13 @@ export interface Ticker {
     q: string
     T: Date
 }
+export const timeframes = [
+    { name: '1s', interval: '1 second' },
+    { name: '1m', interval: '1 minute' },
+    { name: '5m', interval: '5 minutes' },
+    { name: '15m', interval: '15 minutes' },
+    { name: '30m', interval: '30 minutes' },
+    { name: '1H', interval: '1 hour' },
+    { name: '1D', interval: '1 day' },
+    { name: '1W', interval: '1 week' },
+];
