@@ -4,10 +4,10 @@ export interface stream {
 }
 
 export interface Ticker {
-    E: number
+    E: Date
     s: string
-    t: number
+    t: string
     p: string
     q: string
-    T: number
+    T: Date
 }
