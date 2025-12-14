@@ -21,7 +21,6 @@ ws.on("open",()=>{
                 p: streamdata.data.p,
                 q: streamdata.data.q
             }
-           
             await pub(dbData.s,JSON.stringify(dbData));
             await producer('db',JSON.stringify(dbData));
         } catch (error) {

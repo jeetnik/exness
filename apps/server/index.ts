@@ -1,6 +1,6 @@
 import express from "express"
 import { userRouter } from "./router/user";
-const port=8080
+const port=4000
 const app=express();
 
 app.use(express.json())
