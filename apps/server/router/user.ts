@@ -1,4 +1,4 @@
-import { json, Router } from "express";
+import { Router } from "express";
 import { userSchema } from "@exeness/types";
 import { v5 } from "uuid";
 import { USERS } from "../data/db";

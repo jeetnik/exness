@@ -1,0 +1,9 @@
+name:continous deployment
+
+on:
+  push:
+    branches:
+      -main
+
+steps:
+  name:Deploy to docker 

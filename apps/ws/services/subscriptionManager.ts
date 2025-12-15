@@ -28,7 +28,7 @@ export class SubscriptionManager {
                 }
                 set.add(ws);
 
-                this.incrementSymbolRef(channel);
+                this.incrementChannelRef(channel);
             }
         });
     }
@@ -50,7 +50,7 @@ export class SubscriptionManager {
             if (clientSet) {
                 clientSet.delete(ws);
                 if (clientSet.size === 0) {
-                    this.decrementSymbolRef(channel);
+                    this.decrementChannelRef(channel);
                 }
             }
         });
@@ -60,17 +60,17 @@ export class SubscriptionManager {
         }
     }
 
-    getClients(symbol: string): Set<WebSocket> | undefined {
-        return this.channelToClients.get(symbol);
+    getClients(channel: string): Set<WebSocket> | undefined {
+        return this.channelToClients.get(channel);
     }
 
-    private incrementSymbolRef(channel: string) {
+    private incrementChannelRef(channel: string) {
         const ref = (this.refCount.get(channel) || 0) + 1;
         this.refCount.set(channel, ref);
         if (ref === 1) this.redisSubscribe(channel);
     }
 
-    private decrementSymbolRef(channel: string) {
+    private decrementChannelRef(channel: string) {
         const ref = (this.refCount.get(channel) || 0) - 1;
 
         if (ref <= 0) {

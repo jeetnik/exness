@@ -30,7 +30,7 @@ const initDB = async () => {
         `);
 
         await client.query(`
-            CREATE INDEX IF NOT EXISTS trades_symbol_time_idx ON trades (s, t DESC);
+            CREATE INDEX IF NOT EXISTS trades_channel_time_idx ON trades (s, t DESC);
         `);
 
         await client.query("COMMIT");
@@ -46,7 +46,7 @@ const initDB = async () => {
                     WITH (timescaledb.continuous) AS
                     SELECT
                         time_bucket('${tf.interval}', t) AS bucket,
-                        s AS symbol,
+                        s AS channel,
                         FIRST(p, t) AS open,
                         MAX(p) AS high,
                         MIN(p) AS low,
