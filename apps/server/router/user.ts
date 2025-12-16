@@ -1,92 +1,133 @@
 import { Router } from "express";
-import { userSchema } from "@exeness/types";
-import { v5 } from "uuid";
-import { USERS } from "../data/db";
-import bcrypt from "bcrypt";
+import prisma from "db/client";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { NAMESPACE, SALT_ROUND, SECRET } from "../lib/constant";
-import { usermiddleware } from "../middleware";
+const JWT_SECRET="myscreat"
 export const userRouter = Router();
 
 userRouter.post("/signup", async (req, res) => {
   try {
-    //get the user info
-    const parseUserinfo = userSchema.safeParse(req.body);
+    const { email, password } = req.body;
 
-    if (!parseUserinfo.success) {
-      return res.status(403).json({
-        message: "Enter the correct credentail",
-      });
-    }
-    const { email, password } = parseUserinfo.data;
-    //hash the user password
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUND);
-    //gnerate the uuid from email
-    const id = v5(email, NAMESPACE);
-    if (USERS[id]) {
-      return res.status(403).json({
-        message: "User already exists",
-      });
+    if (!email || !password) {
+        return res.status(400).json({
+            message: "Email and password are required"
+        });
     }
 
-    USERS[id] = {
-      email,
-      password: hashedPassword,
-      balance: { balance: 5000 },
-    };
-    return res.status(200).json({
-      userId: id,
+    const ifExist = await prisma.user.findUnique({
+        where: { email }
     });
-  } catch {
-    return res.status(403).json({
-      message: "Error while signing up",
+
+    if (ifExist) {
+        return res.status(403).json({
+            message: "Error while signing up: User already exists"
+        })
+    }
+
+    const hashedPass = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+        data: {
+            email,
+            password: hashedPass
+        }
     });
-  }
+
+    res.status(201).json({
+        userId: user.id,
+        message: "Successfully signed up"
+    });
+} catch (e) {
+    console.error("signup error: ", e);
+    res.status(500).json({
+        message: "Internal server error"
+    });
+}
 });
 
 userRouter.post("/signin",async (req,res)=>{
-  try{  const parsedata=userSchema.safeParse(req.body);
-    if(!parsedata.success){
+    
+  try{
+    const { email, password } = req.body;
+
+    if( !email || !password ){
+        return res.status(401).json({
+            message: "Email and Password are required"
+        });
+    }
+
+    const dbData = await prisma.user.findUnique({
+        where: {email}
+    });
+
+    if (!dbData) {
         return res.status(403).json({
-            message:"Enter the correct credentail"
-        })
-    }
-    const {email,password}=parsedata.data
-    const id=v5(email,NAMESPACE);
-    const user=USERS[id]
-    
-    if(!user){
-       return res.status(403).json({
-            message:"User dose,t exits"
-        })
+            message: "Incorrect credentials"
+        });
     }
 
-    const checkpassword=await bcrypt.compare(password,user.password);
-    if(!checkpassword){
-         return res.status(403).json({
-            message:"Password is incorrect"
-        })
-   
+    const isMatch = await bcrypt.compare(password, dbData.password);
+
+    if(!isMatch){
+        return res.status(403).json({
+            message: "Incorrect credentials"
+        });
     }
-    const token=jwt.sign(id,SECRET)
-    return res.status(200).json({
-        message:"User sign in "
-    ,token
-    })
-    }catch{
-      return res.status(403).json({
-        message:"Server error"
-      })
-  }
+
+    const jwtToken = await jwt.sign({
+        userId: dbData.id,
+        email: dbData.email
+    },
+    JWT_SECRET,{
+        expiresIn:'1h'
+    });
     
+    res.status(200).json({
+        token: jwtToken
+    });
+} catch(e){
+    console.error("Signin error: ", e);
+    res.status(500).json({
+        message:"Internal server issue"
+    });
+}
 })
 
-userRouter.post("/balance",usermiddleware,(req,res)=>{
-    //@ts-ignore
-    const id=req.userid;
-return res.status(200).json({
-    userbalance:USERS[id]!.balance.balance
-})
+userRouter.post("/balance",async(req,res)=>{
+  try {
+    // Get user info from the auth middleware
+    const userPayload = req.user;
+    
+    if (!userPayload || !userPayload.email) {
+        return res.status(401).json({
+            message: "User not authenticated"
+        });
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { email: userPayload.email }
+    });
+
+    if (!user) {
+        return res.status(404).json({
+            message: "User not found"
+        });
+    }
+
+    // Parse the JSON balance field
+    const balance = typeof user.balance === 'string' ? JSON.parse(user.balance) : user.balance;
+
+    res.status(200).json({
+        usd_balance: balance.usd.tradable,
+        locked_balance: balance.usd.locked
+    });
+
+} catch (e) {
+    console.error("Error while getting balance", e);
+    res.status(500).json({
+        message: "Error while retrieving balance from db"
+    });
+}
 })
 
 

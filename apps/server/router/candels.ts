@@ -85,8 +85,9 @@ candelRouter.get("/",async (req:Request,res:Response)=>{
 })
 candelRouter.get("/channels",async (req:Request,res:Response)=>{
     try{
+        console.log("hi there");
         const channels=await getAllChannels();
-
+       console.log("hi there 2");
         res.status(200).json({
             channels,
             count:channels.length

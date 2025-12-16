@@ -93,6 +93,7 @@ export const getCandles = async ({
     }
 };
 export const getAllChannels =async ()=>{
+    console.log("get all channel in !")
 const client =await pool.connect();
 
 try{
@@ -102,6 +103,7 @@ try{
             ORDER BY channel;
                             `
 const result = await client.query(query);
+console.log(result);
 return result.rows.map((row:any)=>row.channel);
 
 }catch(e){
