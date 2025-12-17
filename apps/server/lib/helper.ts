@@ -1,6 +1,7 @@
 import {Pool} from "pg"
+
 const pool=new Pool({
-    connectionString:process.env.DATABASE_URL
+    connectionString:process.env.TIMESCALE_URL
 })
 interface CandleData {
     timestamp: number;

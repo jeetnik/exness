@@ -9,6 +9,7 @@
   "peerDependencies": {
     "typescript": "^5"
   },
+  "scripts": { "dev": "bun run --watch index.ts"},
   "dependencies": {
     "@exeness/types": "*",
     "@types/bcrypt": "^6.0.0",

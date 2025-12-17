@@ -9,6 +9,9 @@
   "peerDependencies": {
     "typescript": "^5"
   },
+  "scripts": {
+     "dev": "bun run --watch index.ts"
+  },
   "dependencies": {
     "@types/pg": "^8.16.0",
     "@types/ws": "^8.18.1",
