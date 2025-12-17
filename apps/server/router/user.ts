@@ -2,6 +2,7 @@ import { Router } from "express";
 import prisma from "db/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { usermiddleware } from "../middleware";
 const JWT_SECRET="myscreat"
 export const userRouter = Router();
 
@@ -93,7 +94,7 @@ userRouter.post("/signin",async (req,res)=>{
 }
 })
 
-userRouter.post("/balance",async(req,res)=>{
+userRouter.post("/balance",usermiddleware, async(req,res)=>{
   try {
     // Get user info from the auth middleware
     const userPayload = req.user;
@@ -114,7 +115,7 @@ userRouter.post("/balance",async(req,res)=>{
         });
     }
 
-    // Parse the JSON balance field
+  
     const balance = typeof user.balance === 'string' ? JSON.parse(user.balance) : user.balance;
 
     res.status(200).json({
