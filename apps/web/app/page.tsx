@@ -1,102 +1,157 @@
-import Image, { type ImageProps } from "next/image";
-import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
+"use client";
 
-type Props = Omit<ImageProps, "src"> & {
-  srcLight: string;
-  srcDark: string;
-};
-
-const ThemeImage = (props: Props) => {
-  const { srcLight, srcDark, ...rest } = props;
-
-  return (
-    <>
-      <Image {...rest} src={srcLight} className="imgLight" />
-      <Image {...rest} src={srcDark} className="imgDark" />
-    </>
-  );
-};
+import React, { useEffect, useRef, useState } from "react";
+import axios from "axios";
+import {
+  createChart,
+  IChartApi,
+  CandlestickData,
+  CandlestickSeries,
+} from "lightweight-charts";
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <ThemeImage
-          className={styles.logo}
-          srcLight="turborepo-dark.svg"
-          srcDark="turborepo-light.svg"
-          alt="Turborepo logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>apps/web/app/page.tsx</code>
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [channels, setChannels] = useState<string[]>([]);
+  const [asset, setAsset] = useState<string>("");
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new/clone?demo-description=Learn+to+implement+a+monorepo+with+a+two+Next.js+sites+that+has+installed+three+local+packages.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4K8ZISWAzJ8X1504ca0zmC%2F0b21a1c6246add355e55816278ef54bc%2FBasic.png&demo-title=Monorepo+with+Turborepo&demo-url=https%3A%2F%2Fexamples-basic-web.vercel.sh%2F&from=templates&project-name=Monorepo+with+Turborepo&repository-name=monorepo-turborepo&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fturborepo%2Ftree%2Fmain%2Fexamples%2Fbasic&root-directory=apps%2Fdocs&skippable-integrations=1&teamSlug=vercel&utm_source=create-turbo"
-            target="_blank"
-            rel="noopener noreferrer"
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const candleSeriesRef = useRef<any>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const currentCandleRef = useRef<CandlestickData | null>(null);
+
+  
+  async function getAllChannels() {
+    try {
+      const res = await axios.get(
+        "http://localhost:4000/api/v1/candels/channels"
+      );
+      setChannels(res.data.channels);
+    } catch (e) {
+      console.error("Failed to fetch channels", e);
+    }
+  }
+getAllChannels();
+
+  useEffect(() => {
+    if (!chartContainerRef.current) return;
+
+    const chart = createChart(chartContainerRef.current, {
+      width: chartContainerRef.current.clientWidth,
+      height: 400,
+      layout: {
+        background: { color: "#0f172a" },
+        textColor: "#e5e7eb",
+      },
+      grid: {
+        vertLines: { color: "#1f2933" },
+        horzLines: { color: "#1f2933" },
+      },
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: true,
+      },
+    });
+
+    const candleSeries = chart.addSeries(CandlestickSeries, {
+      upColor: "#22c55e",
+      downColor: "#ef4444",
+      wickUpColor: "#22c55e",
+      wickDownColor: "#ef4444",
+      borderVisible: false,
+    });
+
+    chartRef.current = chart;
+    candleSeriesRef.current = candleSeries;
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (chartContainerRef.current) {
+        chart.applyOptions({
+          width: chartContainerRef.current.clientWidth,
+        });
+      }
+    });
+
+    resizeObserver.observe(chartContainerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+      chart.remove();
+    };
+  }, [asset]);
+
+  useEffect(() => {
+    if (!asset || !candleSeriesRef.current) return;
+
+    wsRef.current?.close();
+
+    const ws = new WebSocket("ws://localhost:8080");
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ op: "subscribe", channels: [asset] }));
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (!data.p || !data.T) return;
+
+      const time = Math.floor(new Date(data.T).getTime() / 1000);
+      const price = Number(data.p);
+
+      if (
+        !currentCandleRef.current ||
+        currentCandleRef.current.time !== time
+      ) {
+        currentCandleRef.current = {
+          time,
+          open: price,
+          high: price,
+          low: price,
+          close: price,
+        };
+      } else {
+        currentCandleRef.current.high = Math.max(
+          currentCandleRef.current.high,
+          price
+        );
+        currentCandleRef.current.low = Math.min(
+          currentCandleRef.current.low,
+          price
+        );
+        currentCandleRef.current.close = price;
+      }
+
+      candleSeriesRef.current.update(currentCandleRef.current);
+    };
+
+    return () => {
+      ws.close();
+      currentCandleRef.current = null;
+    };
+  }, [asset]);
+
+  return (
+    <div style={{ padding: 16 }}>
+    
+
+      <div style={{ marginTop: 12 }}>
+        {channels.map((c) => (
+          <button
+            key={c}
+            style={{ marginRight: 8 }}
+            onClick={() => setAsset(c)}
           >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://turborepo.com/docs?utm_source"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-        <Button appName="web" className={styles.secondary}>
-          Open alert
-        </Button>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com/templates?search=turborepo&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://turborepo.com?utm_source=create-turbo"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to turborepo.com →
-        </a>
-      </footer>
+            {c}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ marginTop: 12 }}>Asset: {asset}</div>
+
+      <div
+        ref={chartContainerRef}
+        style={{ marginTop: 16, width: "100%", height: 400 }}
+      />
     </div>
   );
 }
