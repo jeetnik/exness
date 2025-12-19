@@ -1,72 +1,187 @@
-// import { Router ,type Request,type Response } from "express";
-// import prisma from "db/client";
-// import { TradeType, Status } from "../../../packages/db/generated/prisma/enums";
-// export const tradeRouter=Router();
+import { Router, type Request, type Response } from "express";
+import prisma from "db/client";
+import{ TradeType, Status } from "db/client";
+import { usermiddleware } from "../middleware";
+import { getLatestCandle } from "../lib/helper";
 
-// tradeRouter.get("/",async(req:Request,res:Response)=>{
-//     try{
-// const {asset,type,margin,leverage}=req.body;
-// const { userId, email } = req.user;
-// if(!asset || !type || !margin || !leverage || (type.toUpperCase() !== "BUY" && type.toUpperCase() !== "SELL")){
-//     return res.status(400).json({
-//         message: "Incorrect inputs"
-//     });
-// }
-// const userData = await prisma.user.findUnique({
-//     where:{ email }
-// });
-// if (!userData) {
-//     return res.status(404).json({
-//         message: "User not found"
-//     });
-// }
-// const userBalance = userData.balance as any;
-// const tradableBalance = userBalance?.usd?.tradable || 0;
-// const amount = margin * leverage;
+const router = Router();
 
-// if(tradableBalance < margin ){
-//     return res.status(402).json({
-//         message: "Sorry trade can't be executed due to less balance"
-//     })
-// }
-// //here we gernerate the random price to stimulate the actual version ,evenetuly we will get the actual prices
-// const price=Math.floor(Math.random()*(5000-1000+1)+1000);
-// const quantity = amount / price;
-// const trade = await prisma.trade.create({
-//     data: {
-//         userId,
-//         asset,
-//         type: type.toUpperCase() as TradeType,
-//         status: Status.OPEN,
-//         leverage,
-//         margin,
-//         amount,
-//         quantity
-//     }
-    
-// });
-// res.status(200).json({
-//     orderId: trade.id,
-//     message:"trade successfully executed"
-// });} catch (e) {
-//     console.error("Error while saving trade data in db", e);
-//     res.status(500).json({
-//         message: "Internal server error"
-//     });
-// }
-    
+router.post("/", usermiddleware, async (req: Request, res: Response) => {
+    try {
+        const { asset, type, margin, leverage } = req.body;
+        const userPayload = req.user;
 
+        if (!userPayload || !userPayload.userId) {
+            return res.status(401).json({
+                message: "User not authenticated"
+            });
+        }
 
-// })
-// tradeRouter.get("/closetrade",(req:Request,res:Response)=>{
-//     try{
-//         if (!req.user) {
-//             return res.status(401).json({
-//                 message: "Sorry you can't access the requested data"
-//             });
-//         }  const { userId } = req.user;
+        if (!asset || !type || !margin || !leverage || (type.toUpperCase() !== "BUY" && type.toUpperCase() !== "SELL")) {
+            return res.status(411).json({
+                message: "Incorrect inputs"
+            });
+        }
 
-//     }catch(e){
+        if (typeof margin !== 'number' || typeof leverage !== 'number' || margin <= 0 || leverage <= 0) {
+            return res.status(411).json({
+                message: "Incorrect inputs"
+            });
+        }
 
-//     }
-// })
+        const userData = await prisma.user.findUnique({
+            where: { id: userPayload.userId }
+        });
+
+        if (!userData) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        const userBalance = typeof userData.balance === 'string' 
+            ? JSON.parse(userData.balance) 
+            : userData.balance;
+        const tradableBalance = userBalance?.usd?.tradable || 0;
+        const marginInUsd = margin / 100;
+
+        if (tradableBalance < marginInUsd) {
+            return res.status(402).json({
+                message: "Insufficient balance"
+            });
+        }
+
+        const latestCandle = await getLatestCandle(asset.toUpperCase());
+        if (!latestCandle) {
+            return res.status(404).json({
+                message: "Asset not found"
+            });
+        }
+
+        const openPrice = latestCandle.close;
+        const amount = marginInUsd * leverage;
+        const quantity = amount / (openPrice / 10000);
+
+        const newBalance = {
+            usd: {
+                tradable: tradableBalance - marginInUsd,
+                locked: (userBalance?.usd?.locked || 0) + marginInUsd
+            }
+        };
+
+        const [trade] = await prisma.$transaction([
+            prisma.trade.create({
+                data: {
+                    userId: userPayload.userId,
+                    asset: asset.toUpperCase(),
+                    type: type.toUpperCase() as TradeType,
+                    status: Status.OPEN,
+                    leverage,
+                    margin: marginInUsd,
+                    amount,
+                    quantity,
+                    openPrice: openPrice
+                }
+            }),
+            prisma.user.update({
+                where: { id: userPayload.userId },
+                data: { balance: newBalance }
+            })
+        ]);
+
+        res.status(200).json({
+            orderId: trade.id
+        });
+    } catch (e) {
+        console.error("Error while creating trade:", e);
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+});
+
+router.get("/open", usermiddleware, async (req: Request, res: Response) => {
+    try {
+        const userPayload = req.user;
+
+        if (!userPayload || !userPayload.userId) {
+            return res.status(401).json({
+                message: "User not authenticated"
+            });
+        }
+
+        const openTrades = await prisma.trade.findMany({
+            where: {
+                userId: userPayload.userId,
+                status: Status.OPEN
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        const trades = openTrades.map((trade) => {
+            return {
+                orderId: trade.id,
+                type: trade.type.toLowerCase(),
+                margin: Math.floor(trade.margin * 100),
+                leverage: trade.leverage,
+                openPrice: Math.floor(trade.openPrice)
+            };
+        });
+
+        res.status(200).json({
+            trades
+        });
+    } catch (e) {
+        console.error("Error fetching open trades:", e);
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+});
+
+router.get("/", usermiddleware, async (req: Request, res: Response) => {
+    try {
+        const userPayload = req.user;
+
+        if (!userPayload || !userPayload.userId) {
+            return res.status(401).json({
+                message: "User not authenticated"
+            });
+        }
+
+        const closedTrades = await prisma.trade.findMany({
+            where: {
+                userId: userPayload.userId,
+                status: Status.CLOSED
+            },
+            orderBy: {
+                updatedAt: 'desc'
+            }
+        });
+
+        const trades = closedTrades.map((trade) => {
+            return {
+                orderId: trade.id,
+                type: trade.type.toLowerCase(),
+                margin: Math.floor(trade.margin * 100),
+                leverage: trade.leverage,
+                openPrice: Math.floor(trade.openPrice),
+                closePrice: Math.floor(trade.closePrice),
+                pnl: Math.floor(trade.pnl * 100)
+            };
+        });
+
+        res.status(200).json({
+            trades
+        });
+    } catch (e) {
+        console.error("Error fetching closed trades:", e);
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+});
+
+export default router;

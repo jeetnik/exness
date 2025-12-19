@@ -131,7 +131,7 @@ getAllChannels();
   }, [asset]);
 
   return (
-    <div style={{ padding: 16 }}>
+    <div className="p-4 bg-slate-900 min-h-screen text-white">
     
 
       <div style={{ marginTop: 12 }}>
@@ -147,8 +147,11 @@ getAllChannels();
       </div>
 
       <div style={{ marginTop: 12 }}>Asset: {asset}</div>
-
+      <h1 className="text-3xl text-amber-100 font-bold underline">
+    Hello world!
+  </h1>
       <div
+
         ref={chartContainerRef}
         style={{ marginTop: 16, width: "100%", height: 400 }}
       />

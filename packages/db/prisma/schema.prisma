@@ -20,45 +20,49 @@ enum TradeType {
   SHORT
 }
 
-enum Status { 
+enum Status {
   OPEN
   CLOSED
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String    @id @default(uuid())
+  email     String    @unique
   password  String
-  balance   Json     @default("{\"usd\": {\"tradable\": 5000.0, \"locked\": 0.0}}")
+  balance   Json      @default("{\"usd\": {\"tradable\": 5000.0, \"locked\": 0.0}}")
   trades    Trade[]
   holdings  Holding[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Trade {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  asset     String
-  type      TradeType
-  status    Status
-  margin    Float
-  amount    Float
-  quantity  Float
-  leverage  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  asset      String
+  type       TradeType
+  status     Status
+  margin     Float
+  amount     Float
+  quantity   Float
+  leverage   Int
+  openPrice  Float     @default(0)
+  closePrice Float     @default(0)
+  pnl        Float     @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
 
 model Holding {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  asset     String
-  quantity  Float
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  asset        String
+  quantity     Float
   averagePrice Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
   @@unique([userId, asset])
 }

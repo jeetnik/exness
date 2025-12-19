@@ -3,16 +3,17 @@ import prisma from "db/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { usermiddleware } from "../middleware";
-const JWT_SECRET="myscreat"
-export const userRouter = Router();
 
-userRouter.post("/signup", async (req, res) => {
+const JWT_SECRET = process.env.JWT_SECRET || "mysecret";
+const router = Router();
+
+router.post("/signup", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return res.status(400).json({
-            message: "Email and password are required"
+        return res.status(403).json({
+            message: "Error while signing up"
         });
     }
 
@@ -22,7 +23,7 @@ userRouter.post("/signup", async (req, res) => {
 
     if (ifExist) {
         return res.status(403).json({
-            message: "Error while signing up: User already exists"
+            message: "Error while signing up"
         })
     }
 
@@ -34,19 +35,18 @@ userRouter.post("/signup", async (req, res) => {
         }
     });
 
-    res.status(201).json({
-        userId: user.id,
-        message: "Successfully signed up"
+    res.status(200).json({
+        userId: user.id
     });
 } catch (e) {
     console.error("signup error: ", e);
-    res.status(500).json({
-        message: "Internal server error"
+    res.status(403).json({
+        message: "Error while signing up"
     });
 }
 });
 
-userRouter.post("/signin",async (req,res)=>{
+router.post("/signin", async (req, res) => {
     
   try{
     const { email, password } = req.body;
@@ -94,9 +94,8 @@ userRouter.post("/signin",async (req,res)=>{
 }
 })
 
-userRouter.post("/balance",usermiddleware, async(req,res)=>{
+router.get("/balance", usermiddleware, async (req, res) => {
   try {
-    // Get user info from the auth middleware
     const userPayload = req.user;
     
     if (!userPayload || !userPayload.email) {
@@ -115,12 +114,10 @@ userRouter.post("/balance",usermiddleware, async(req,res)=>{
         });
     }
 
-  
     const balance = typeof user.balance === 'string' ? JSON.parse(user.balance) : user.balance;
 
     res.status(200).json({
-        usd_balance: balance.usd.tradable,
-        locked_balance: balance.usd.locked
+        usd_balance: Math.floor(balance.usd.tradable * 100)
     });
 
 } catch (e) {
@@ -129,6 +126,8 @@ userRouter.post("/balance",usermiddleware, async(req,res)=>{
         message: "Error while retrieving balance from db"
     });
 }
-})
+});
+
+export default router;
 
 

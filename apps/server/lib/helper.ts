@@ -1,8 +1,8 @@
-import {Pool} from "pg"
+import { Pool } from "pg";
 
-const pool=new Pool({
-    connectionString:process.env.TIMESCALE_URL
-})
+const pool = new Pool({
+    connectionString: process.env.TIMESCALE_URL
+});
 interface CandleData {
     timestamp: number;
     open: number;
@@ -93,32 +93,28 @@ export const getCandles = async ({
         client.release();
     }
 };
-export const getAllChannels =async ()=>{
-    console.log("get all channel in !")
-const client =await pool.connect();
+export const getAllChannels = async (): Promise<string[]> => {
+    const client = await pool.connect();
 
-try{
-    const query=`
+    try {
+        const query = `
             SELECT DISTINCT channel 
             FROM trades_1m 
             ORDER BY channel;
-                            `
-const result = await client.query(query);
-console.log(result);
-return result.rows.map((row:any)=>row.channel);
+        `;
+        const result = await client.query(query);
+        return result.rows.map((row: any) => row.channel);
 
-}catch(e){
-    console.error('Error fetching available channel:', e);
-    throw e;
-}finally{
-    client.release();
-}
-
-
-}
-export const getLatestCandle =async(asset:string,timeframe:string='1m')=>{
-    const client= await pool.connect();
-    try{
+    } catch (e) {
+        console.error('Error fetching available channel:', e);
+        throw e;
+    } finally {
+        client.release();
+    }
+};
+export const getLatestCandle = async (asset: string, timeframe: string = '1m'): Promise<CandleData | null> => {
+    const client = await pool.connect();
+    try {
         const dbTimeframe = timeframeMap[timeframe];
         if (!dbTimeframe) {
             throw new Error(`Invalid timeframe: ${timeframe}`);
@@ -137,26 +133,25 @@ export const getLatestCandle =async(asset:string,timeframe:string='1m')=>{
         ORDER BY bucket DESC
         LIMIT 1;
     `;
-    const result = await client.query(query, [asset]);
-    if (result.rows.length === 0) {
-        return null;
-    }
-    const row = result.rows[0];
-    return {
-        timestamp: Math.floor(row.timestamp),
-        open: Math.floor(parseFloat(row.open) * 10000),
-        close: Math.floor(parseFloat(row.close) * 10000),
-        high: Math.floor(parseFloat(row.high) * 10000),
-        low: Math.floor(parseFloat(row.low) * 10000),
-        volume: parseFloat(row.volume),
-        decimal: 4
-    };
-    }catch(e){
+        const result = await client.query(query, [asset]);
+        if (result.rows.length === 0) {
+            return null;
+        }
+        const row = result.rows[0];
+        return {
+            timestamp: Math.floor(row.timestamp),
+            open: Math.floor(parseFloat(row.open) * 10000),
+            close: Math.floor(parseFloat(row.close) * 10000),
+            high: Math.floor(parseFloat(row.high) * 10000),
+            low: Math.floor(parseFloat(row.low) * 10000),
+            volume: parseFloat(row.volume),
+            decimal: 4
+        };
+    } catch (e) {
         console.error('Error fetching latest candle:', e);
         throw e;
-
-    }finally{
-        client.release()
+    } finally {
+        client.release();
     }
+};
 
-}

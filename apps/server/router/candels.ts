@@ -1,8 +1,9 @@
-import { Router,type Request,type Response } from "express"
+import { Router, type Request, type Response } from "express";
 import { getAllChannels, getCandles, getLatestCandle } from "../lib/helper";
 
-export const candelRouter = Router();
-candelRouter.get("/",async (req:Request,res:Response)=>{
+const router = Router();
+
+router.get("/", async (req: Request, res: Response) => {
    
     
     try {
@@ -83,7 +84,7 @@ candelRouter.get("/",async (req:Request,res:Response)=>{
     }
 
 })
-candelRouter.get("/channels",async (req:Request,res:Response)=>{
+router.get("/channels", async (req: Request, res: Response) => {
     try{
         console.log("hi there");
         const channels=await getAllChannels();
@@ -101,7 +102,7 @@ candelRouter.get("/channels",async (req:Request,res:Response)=>{
     }
 
 })
-candelRouter.get("/latest",async (req:Request,res:Response)=>{
+router.get("/latest", async (req: Request, res: Response) => {
     try{
         const {asset,ts='1m'}=req.query;
         if(!asset||typeof asset!=='string'){
@@ -124,5 +125,6 @@ candelRouter.get("/latest",async (req:Request,res:Response)=>{
             error: "Internal server error while fetching latest candle"
         });
     }
-    
-})
+});
+
+export default router;

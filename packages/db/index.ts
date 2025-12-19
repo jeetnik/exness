@@ -13,6 +13,8 @@ const prisma=globalForPrisma.prisma||new PrismaClient({adapter:adpater})
 if(process.env.NODE_ENV!='production')globalForPrisma.prisma = prisma
 export default prisma
 
+export { TradeType, Status } from "./generated/prisma/enums";
+
 
 
 
