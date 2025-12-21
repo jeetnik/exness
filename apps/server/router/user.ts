@@ -13,7 +13,7 @@ router.post("/signup", async (req, res) => {
 
     if (!email || !password) {
         return res.status(403).json({
-            message: "Error while signing up"
+            message: "REQUIRED EMAIL AND PASSWORD"
         });
     }
 
@@ -23,7 +23,7 @@ router.post("/signup", async (req, res) => {
 
     if (ifExist) {
         return res.status(403).json({
-            message: "Error while signing up"
+            message: "USER ALREADY EXIXTs"
         })
     }
 

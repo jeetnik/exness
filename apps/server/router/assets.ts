@@ -52,3 +52,6 @@ router.get('/:symbol', async (req: Request, res: Response) => {
 export default router;
 
 
+
+
+

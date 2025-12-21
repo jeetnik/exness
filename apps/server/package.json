@@ -10,7 +10,10 @@
     "typescript": "^5"
   },
   "scripts": {
-    "dev": "bun run --watch index.ts"
+    "dev": "bun run --watch index.ts",
+    "migrate": "bunx prisma migrate dev",
+    "migrate:db": "bunx prisma migrate deploy",
+    "start": "cd /app/packages/db && bunx prisma migrate deploy && bunx prisma generate && cd /app/apps/server && bun index.ts"
   },
   "dependencies": {
     "@exeness/types": "*",

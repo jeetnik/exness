@@ -7,7 +7,7 @@ COPY package.json bun.lock ./
 COPY apps/poller/package.json ./apps/poller/
 COPY apps/server/package.json ./apps/server/
 COPY apps/ws/package.json ./apps/ws/
-COPY apps/web/package.json ./apps/web/
+COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/db/package.json ./packages/db/
 COPY packages/types/package.json ./packages/types/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
