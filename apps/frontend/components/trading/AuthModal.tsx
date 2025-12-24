@@ -51,7 +51,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-md bg-zinc-900 border-zinc-800 text-white">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-600 bg-clip-text text-transparent">
+                    <DialogTitle className="text-2xl font-bold text-white">
                         {mode === 'signin' ? 'Welcome Back' : 'Create Account'}
                     </DialogTitle>
                 </DialogHeader>
@@ -67,7 +67,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="mt-1 bg-zinc-800 border-zinc-700 text-white focus:border-orange-500"
+                            className="mt-1 bg-zinc-800 border-zinc-700 text-white focus:border-white"
                             placeholder="you@example.com"
                         />
                     </div>
@@ -82,7 +82,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="mt-1 bg-zinc-800 border-zinc-700 text-white focus:border-orange-500"
+                            className="mt-1 bg-zinc-800 border-zinc-700 text-white focus:border-white"
                             placeholder="••••••••"
                         />
                     </div>
@@ -96,7 +96,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
                     <Button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-semibold"
+                        className="w-full bg-white text-black hover:bg-white/90 font-semibold"
                     >
                         {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
                     </Button>
@@ -106,7 +106,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
                         <button
                             type="button"
                             onClick={toggleMode}
-                            className="text-orange-500 hover:text-orange-400 font-semibold"
+                            className="text-white hover:text-white/80 font-semibold"
                         >
                             {mode === 'signin' ? 'Sign Up' : 'Sign In'}
                         </button>

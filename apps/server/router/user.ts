@@ -97,7 +97,7 @@ router.post("/signin", async (req, res) => {
 router.get("/balance", usermiddleware, async (req, res) => {
   try {
     const userPayload = req.user;
-    
+
     if (!userPayload || !userPayload.email) {
         return res.status(401).json({
             message: "User not authenticated"
@@ -117,7 +117,9 @@ router.get("/balance", usermiddleware, async (req, res) => {
     const balance = typeof user.balance === 'string' ? JSON.parse(user.balance) : user.balance;
 
     res.status(200).json({
-        usd_balance: Math.floor(balance.usd.tradable * 100)
+        usd_balance: Math.floor(balance.usd.tradable * 100),
+        locked_balance: Math.floor(balance.usd.locked * 100),
+        total_balance: Math.floor((balance.usd.tradable + balance.usd.locked) * 100)
     });
 
 } catch (e) {

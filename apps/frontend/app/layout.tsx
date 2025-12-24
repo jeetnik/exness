@@ -3,8 +3,8 @@ import "./globals.css";
 import { AuthProvider } from "@/hooks/useAuth";
 
 export const metadata: Metadata = {
-  title: "FutureX - Trading Platform",
-  description: "Professional cryptocurrency trading platform",
+  title: "TradeFlow - Professional Trading Platform",
+  description: "Advanced cryptocurrency and futures trading platform with real-time charts and analytics",
 };
 
 export default function RootLayout({

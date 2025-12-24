@@ -54,7 +54,7 @@ export function LiveMarkets({ symbols, selectedSymbol, onSymbolClick }: LiveMark
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center text-white text-xs font-bold">
+                                    <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white text-xs font-bold">
                                         {symbol.slice(0, 2)}
                                     </div>
                                     <div>

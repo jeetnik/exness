@@ -76,6 +76,11 @@ class ApiClient {
         return response.data;
     }
 
+    async closeTrade(orderId: string) {
+        const response = await this.client.post(`/api/v1/trade/close/${orderId}`);
+        return response.data;
+    }
+
     async getCandles(asset: string, ts: string, startTime: number, endTime: number) {
         const response = await this.client.get('/api/v1/candles', {
             params: { asset, ts, startTime, endTime },

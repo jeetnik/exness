@@ -52,35 +52,31 @@ export default function TradingPage() {
             <Header onSignIn={handleSignIn} onSignUp={handleSignUp} />
 
             <div className="flex-1 grid grid-cols-12 gap-4 p-4 overflow-hidden">
-                {/* Left Sidebar - Markets */}
-                <div className="col-span-3 flex flex-col gap-4 overflow-y-auto">
-                    <LiveMarkets
-                        symbols={availableSymbols}
-                        selectedSymbol={selectedSymbol}
-                        onSymbolClick={setSelectedSymbol}
-                    />
-                </div>
-
-                {/* Center - Chart */}
-                <div className="col-span-6 flex flex-col gap-4">
-                    <div className="flex-1">
+                {/* Left - Chart */}
+                <div className="col-span-9 flex flex-col gap-4 h-full">
+                    <div className="flex-[3] min-h-0">
                         <ChartPanel
                             selectedSymbol={selectedSymbol}
                             onSymbolChange={setSelectedSymbol}
                         />
                     </div>
-                    <div className="h-[320px]">
+                    <div className="flex-[1] min-h-[200px] max-h-[280px] overflow-hidden">
                         <OrdersPanel />
                     </div>
                 </div>
 
-                {/* Right Sidebar - Trading & Wallet */}
+                {/* Right Sidebar - Wallet, Trading & Markets */}
                 <div className="col-span-3 flex flex-col gap-4 overflow-y-auto">
                     <WalletPanel onSignIn={handleSignIn} />
                     <TradePanel
                         symbol={selectedSymbol}
                         currentPrice={currentPrice}
                         onAuthRequired={handleSignIn}
+                    />
+                    <LiveMarkets
+                        symbols={availableSymbols}
+                        selectedSymbol={selectedSymbol}
+                        onSymbolClick={setSelectedSymbol}
                     />
                 </div>
             </div>

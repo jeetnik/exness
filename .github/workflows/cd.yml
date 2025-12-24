@@ -1,9 +1,176 @@
-name:continous deployment
+name: Continuous Deployment
 
 on:
   push:
     branches:
-      -main
+      - main
+  workflow_dispatch:
 
-steps:
-  name:Deploy to docker 
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  EC2_HOST: ${{ secrets.EC2_HOST }}
+  EC2_USER: ${{ secrets.EC2_USER }}
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Server image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.server
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/exeness-server:latest
+            ${{ secrets.DOCKER_USERNAME }}/exeness-server:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/exeness-server:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/exeness-server:buildcache,mode=max
+
+      - name: Build and push WebSocket image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.ws
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/exeness-ws:latest
+            ${{ secrets.DOCKER_USERNAME }}/exeness-ws:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/exeness-ws:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/exeness-ws:buildcache,mode=max
+
+      - name: Build and push Poller image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.poller
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/exeness-poller:latest
+            ${{ secrets.DOCKER_USERNAME }}/exeness-poller:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/exeness-poller:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/exeness-poller:buildcache,mode=max
+
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.web.prod
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/exeness-web:latest
+            ${{ secrets.DOCKER_USERNAME }}/exeness-web:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/exeness-web:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/exeness-web:buildcache,mode=max
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create deployment directory on EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            mkdir -p ~/exeness
+            cd ~/exeness
+
+      - name: Copy docker-compose file to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.prod.yml,.env.example"
+          target: "~/exeness"
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/exeness
+
+            # Create .env if it doesn't exist
+            if [ ! -f .env ]; then
+              cp .env.example .env
+              echo "Created .env file from .env.example"
+              echo "Please update .env with production values!"
+            fi
+
+            # Login to Docker Hub
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+            # Pull latest images
+            docker pull ${{ secrets.DOCKER_USERNAME }}/exeness-server:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/exeness-ws:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/exeness-poller:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/exeness-web:latest
+
+            # Stop and remove old containers
+            docker-compose -f docker-compose.prod.yml down
+
+            # Start new containers
+            docker-compose -f docker-compose.prod.yml up -d
+
+            # Clean up old images
+            docker image prune -af
+
+            # Show running containers
+            docker-compose -f docker-compose.prod.yml ps
+
+            # Show logs
+            docker-compose -f docker-compose.prod.yml logs --tail=50
+
+      - name: Run database migrations
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/exeness
+            docker exec exeness-server sh -c "cd /app/packages/db && bun run prisma migrate deploy"
+
+      - name: Health check
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Waiting for services to be ready..."
+            sleep 10
+
+            # Check if containers are running
+            cd ~/exeness
+            docker-compose -f docker-compose.prod.yml ps
+
+            # Check server health
+            curl -f http://localhost:4000 || echo "Server health check failed"
+
+            # Check web health
+            curl -f http://localhost:3000 || echo "Web health check failed" 

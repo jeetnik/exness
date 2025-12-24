@@ -35,7 +35,7 @@ export function TradingChart({ symbol, timeframe }: any) {
 
         const chart = createChart(containerRef.current, {
             width: containerRef.current.clientWidth,
-            height: containerRef.current.clientHeight || 400,
+            height: containerRef.current.clientHeight,
             layout: {
                 background: { color: "#09090b" },
                 textColor: "#a1a1aa",
@@ -48,6 +48,7 @@ export function TradingChart({ symbol, timeframe }: any) {
                 timeVisible: true,
                 secondsVisible: false,
             },
+            autoSize: true,
         });
 
         // ✅ v5 CORRECT WAY
@@ -68,6 +69,7 @@ export function TradingChart({ symbol, timeframe }: any) {
             if (containerRef.current && chartRef.current) {
                 chart.applyOptions({
                     width: containerRef.current.clientWidth,
+                    height: containerRef.current.clientHeight,
                 });
             }
         });

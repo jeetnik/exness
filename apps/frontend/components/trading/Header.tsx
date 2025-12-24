@@ -22,25 +22,14 @@ export function Header({ onSignIn, onSignUp }: HeaderProps) {
         <header className="border-b border-zinc-800 bg-zinc-950">
             <div className="px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
                         <TrendingUp className="w-6 h-6 text-white" />
                     </div>
-                    <span className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-600 bg-clip-text text-transparent">
-                        FutureX
+                    <span className="text-2xl font-bold text-white">
+                        TradeFlow
                     </span>
                 </div>
 
-                <nav className="flex items-center gap-6">
-                    <a href="#" className="text-sm font-medium text-white hover:text-orange-500 transition-colors">
-                        Trade
-                    </a>
-                    <a href="#" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
-                        Markets
-                    </a>
-                    <a href="#" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
-                        Portfolio
-                    </a>
-                </nav>
 
                 <div className="flex items-center gap-3">
                     {isAuthenticated ? (
@@ -54,7 +43,7 @@ export function Header({ onSignIn, onSignUp }: HeaderProps) {
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="h-9 w-9 p-0">
-                                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center text-white text-sm font-semibold">
+                                        <div className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white text-sm font-semibold">
                                             U
                                         </div>
                                     </Button>
@@ -86,7 +75,7 @@ export function Header({ onSignIn, onSignUp }: HeaderProps) {
                             </Button>
                             <Button
                                 onClick={onSignUp}
-                                className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white"
+                                className="bg-white text-black hover:bg-white/90"
                             >
                                 Sign Up
                             </Button>
