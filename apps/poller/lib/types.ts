@@ -1,6 +1,6 @@
 export interface stream {
     stream: string
-    data: Ticker
+    data: Ticker | DepthUpdate
 }
 
 export interface Ticker {
@@ -10,6 +10,16 @@ export interface Ticker {
     p: string
     q: string
     T: Date
+}
+
+export interface DepthUpdate {
+    e: string
+    E: number
+    s: string
+    U: number
+    u: number
+    b: [string, string][]
+    a: [string, string][]
 }
 export const timeframes = [
     { name: '1s', interval: '1 second' },
