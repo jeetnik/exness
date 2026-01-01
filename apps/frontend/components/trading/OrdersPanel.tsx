@@ -77,8 +77,8 @@ export function OrdersPanel() {
     const trades = activeTab === 'open' ? openTrades : closedTrades;
 
     return (
-        <div className="bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden">
-            <div className="flex border-b border-zinc-800">
+        <div className="bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden h-full flex flex-col">
+            <div className="flex border-b border-zinc-800 flex-shrink-0">
                 <button
                     onClick={() => setActiveTab('open')}
                     className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
@@ -101,7 +101,7 @@ export function OrdersPanel() {
                 </button>
             </div>
 
-            <div className="max-h-[300px] overflow-y-auto">
+            <div className="flex-1 overflow-y-auto min-h-0">
                 {loading ? (
                     <div className="p-6 text-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-2 border-zinc-700 border-t-white mx-auto"></div>
@@ -139,66 +139,68 @@ export function OrdersPanel() {
                                     </span>
                                 </div>
 
-                                <div className="grid grid-cols-4 gap-2 text-xs mb-2">
-                                    <div>
-                                        <div className="text-zinc-400">Margin</div>
-                                        <div className="text-white font-semibold">
-                                            ${(trade.margin / 100).toFixed(2)}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-zinc-400">Entry</div>
-                                        <div className="text-white font-semibold">
-                                            ${(trade.openPrice / 100).toFixed(2)}
-                                        </div>
-                                    </div>
-                                    {trade.currentPrice && (
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex gap-4 text-xs flex-1">
                                         <div>
-                                            <div className="text-zinc-400">Current</div>
+                                            <div className="text-zinc-400">Margin</div>
                                             <div className="text-white font-semibold">
-                                                ${(trade.currentPrice / 100).toFixed(2)}
+                                                ${(trade.margin / 100).toFixed(2)}
                                             </div>
                                         </div>
-                                    )}
-                                    {trade.closePrice && (
                                         <div>
-                                            <div className="text-zinc-400">Exit</div>
+                                            <div className="text-zinc-400">Entry</div>
                                             <div className="text-white font-semibold">
-                                                ${(trade.closePrice / 100).toFixed(2)}
+                                                ${(trade.openPrice / 100).toFixed(2)}
                                             </div>
                                         </div>
-                                    )}
-                                    {trade.unrealizedPnl !== undefined && (
-                                        <div>
-                                            <div className="text-zinc-400">Unrealized P&L</div>
-                                            <div className={`font-semibold ${
-                                                trade.unrealizedPnl >= 0 ? 'text-green-500' : 'text-red-500'
-                                            }`}>
-                                                {trade.unrealizedPnl >= 0 ? '+' : ''}${(trade.unrealizedPnl / 100).toFixed(2)}
+                                        {trade.currentPrice && (
+                                            <div>
+                                                <div className="text-zinc-400">Current</div>
+                                                <div className="text-white font-semibold">
+                                                    ${(trade.currentPrice / 100).toFixed(2)}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
-                                    {trade.pnl !== undefined && (
-                                        <div>
-                                            <div className="text-zinc-400">P&L</div>
-                                            <div className={`font-semibold ${
-                                                trade.pnl >= 0 ? 'text-green-500' : 'text-red-500'
-                                            }`}>
-                                                {trade.pnl >= 0 ? '+' : ''}${(trade.pnl / 100).toFixed(2)}
+                                        )}
+                                        {trade.closePrice && (
+                                            <div>
+                                                <div className="text-zinc-400">Exit</div>
+                                                <div className="text-white font-semibold">
+                                                    ${(trade.closePrice / 100).toFixed(2)}
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
+                                        {trade.unrealizedPnl !== undefined && (
+                                            <div>
+                                                <div className="text-zinc-400">Unrealized P&L</div>
+                                                <div className={`font-semibold ${
+                                                    trade.unrealizedPnl >= 0 ? 'text-green-500' : 'text-red-500'
+                                                }`}>
+                                                    {trade.unrealizedPnl >= 0 ? '+' : ''}${(trade.unrealizedPnl / 100).toFixed(2)}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {trade.pnl !== undefined && (
+                                            <div>
+                                                <div className="text-zinc-400">P&L</div>
+                                                <div className={`font-semibold ${
+                                                    trade.pnl >= 0 ? 'text-green-500' : 'text-red-500'
+                                                }`}>
+                                                    {trade.pnl >= 0 ? '+' : ''}${(trade.pnl / 100).toFixed(2)}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {activeTab === 'open' && (
+                                        <button
+                                            onClick={() => handleClosePosition(trade.orderId)}
+                                            disabled={closingOrder === trade.orderId}
+                                            className="px-4 py-2 text-xs font-semibold bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 text-white rounded transition-colors whitespace-nowrap"
+                                        >
+                                            {closingOrder === trade.orderId ? 'Closing...' : 'Close Position'}
+                                        </button>
                                     )}
                                 </div>
-
-                                {activeTab === 'open' && (
-                                    <button
-                                        onClick={() => handleClosePosition(trade.orderId)}
-                                        disabled={closingOrder === trade.orderId}
-                                        className="w-full mt-2 px-3 py-1.5 text-xs font-semibold bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 text-white rounded transition-colors"
-                                    >
-                                        {closingOrder === trade.orderId ? 'Closing...' : 'Close Position'}
-                                    </button>
-                                )}
                             </div>
                         ))}
                     </div>

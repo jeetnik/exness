@@ -16,51 +16,51 @@ interface AssetData {
 const assetMetadata: { [key: string]: { name: string; imageUrl: string } } = {
     'BTC': {
         name: 'Bitcoin',
-        imageUrl: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png'
+        imageUrl: 'https://s3-symbol-logo.tradingview.com/crypto/XTVCBTC--big.svg'
     },
     'ETH': {
         name: 'Ethereum',
-        imageUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png'
+        imageUrl: 'https://s3-symbol-logo.tradingview.com/crypto/XTVCETH--big.svg'
     },
     'SOL': {
         name: 'Solana',
-        imageUrl: 'https://cryptologos.cc/logos/solana-sol-logo.png'
+        imageUrl: 'https://s3-symbol-logo.tradingview.com/crypto/XTVCSOL--big.svg'
     },
     'XRP': {
         name: 'Ripple',
-        imageUrl: 'https://cryptologos.cc/logos/xrp-xrp-logo.png'
+        imageUrl: 'https://s3-symbol-logo.tradingview.com/crypto/XTVCXRP--big.svg'
     },
     'MATIC': {
         name: 'Polygon',
-        imageUrl: 'https://cryptologos.cc/logos/polygon-matic-logo.png'
+        imageUrl: 'https://s3-symbol-logo.tradingview.com/crypto/XTVCMATIC--big.svg'
     },
     'AVAX': {
         name: 'Avalanche',
-        imageUrl: 'https://cryptologos.cc/logos/avalanche-avax-logo.png'
+        imageUrl: 'https://s3-symbol-logo.tradingview.com/crypto/XTVCAVAX--big.svg'
     },
     'DOT': {
         name: 'Polkadot',
-        imageUrl: 'https://cryptologos.cc/logos/polkadot-new-dot-logo.png'
+        imageUrl: 'https://s3-symbol-logo.tradingview.com/crypto/XTVCDOT--big.svg'
     },
     'LINK': {
         name: 'Chainlink',
-        imageUrl: 'https://cryptologos.cc/logos/chainlink-link-logo.png'
+        imageUrl: 'https://s3-symbol-logo.tradingview.com/crypto/XTVCLINK--big.svg'
     },
     'UNI': {
         name: 'Uniswap',
-        imageUrl: 'https://cryptologos.cc/logos/uniswap-uni-logo.png'
+        imageUrl: 'https://s3-symbol-logo.tradingview.com/crypto/XTVCUNI--big.svg'
     },
     'ATOM': {
         name: 'Cosmos',
-        imageUrl: 'https://cryptologos.cc/logos/cosmos-atom-logo.png'
+        imageUrl: 'https://s3-symbol-logo.tradingview.com/crypto/XTVCATOM--big.svg'
     },
     'ADA': {
         name: 'Cardano',
-        imageUrl: 'https://cryptologos.cc/logos/cardano-ada-logo.png'
+        imageUrl: 'https://s3-symbol-logo.tradingview.com/crypto/XTVCADA--big.svg'
     },
     'DOGE': {
         name: 'Dogecoin',
-        imageUrl: 'https://cryptologos.cc/logos/dogecoin-doge-logo.png'
+        imageUrl: 'https://s3-symbol-logo.tradingview.com/crypto/XTVCDOGE--big.svg'
     }
 };
 

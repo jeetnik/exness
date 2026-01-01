@@ -6,12 +6,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { apiClient } from '@/lib/api-client';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, CheckCircle } from 'lucide-react';
 
 interface TradePanelProps {
     symbol: string;
     currentPrice: number | null;
     onAuthRequired: () => void;
+}
+
+interface OrderSuccess {
+    type: 'buy' | 'sell';
+    orderId: string;
+    margin: number;
+    leverage: number;
+    totalPosition: number;
 }
 
 export function TradePanel({ symbol, currentPrice, onAuthRequired }: TradePanelProps) {
@@ -20,6 +28,7 @@ export function TradePanel({ symbol, currentPrice, onAuthRequired }: TradePanelP
     const [leverage, setLeverage] = useState('10');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [orderSuccess, setOrderSuccess] = useState<OrderSuccess | null>(null);
 
     const handleTrade = async (type: 'buy' | 'sell') => {
         if (!isAuthenticated) {
@@ -44,11 +53,23 @@ export function TradePanel({ symbol, currentPrice, onAuthRequired }: TradePanelP
                 return;
             }
 
-            await apiClient.createTrade(symbol, type, marginNum * 100, leverageNum);
+            const response = await apiClient.createTrade(symbol, type, marginNum * 100, leverageNum);
             await refreshBalance();
 
-            setMargin('100');
-            setLeverage('10');
+            setOrderSuccess({
+                type,
+                orderId: response.orderId,
+                margin: marginNum,
+                leverage: leverageNum,
+                totalPosition: marginNum * leverageNum
+            });
+
+            setTimeout(() => {
+                setOrderSuccess(null);
+                setMargin('100');
+                setLeverage('10');
+            }, 3000);
+
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to execute trade');
         } finally {
@@ -58,8 +79,48 @@ export function TradePanel({ symbol, currentPrice, onAuthRequired }: TradePanelP
 
     const totalAmount = (parseFloat(margin) || 0) * (parseInt(leverage) || 1);
 
+    if (orderSuccess) {
+        return (
+            <div className="p-6 bg-zinc-950 border border-zinc-800 rounded-lg h-full overflow-auto flex flex-col items-center justify-center space-y-4">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                    orderSuccess.type === 'buy' ? 'bg-green-500/20' : 'bg-red-500/20'
+                }`}>
+                    <CheckCircle className={`w-10 h-10 ${
+                        orderSuccess.type === 'buy' ? 'text-green-500' : 'text-red-500'
+                    }`} />
+                </div>
+
+                <div className="text-center space-y-2">
+                    <h3 className="text-xl font-bold text-white">
+                        Order {orderSuccess.type === 'buy' ? 'Long' : 'Short'} Placed
+                    </h3>
+                    <p className="text-sm text-zinc-400">
+                        Order ID: {orderSuccess.orderId.slice(0, 8)}...
+                    </p>
+                </div>
+
+                <div className="w-full space-y-2 bg-zinc-900/50 rounded-lg p-4 border border-zinc-800">
+                    <div className="flex justify-between text-sm">
+                        <span className="text-zinc-400">Margin</span>
+                        <span className="text-white font-medium">${orderSuccess.margin}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-zinc-400">Leverage</span>
+                        <span className="text-white font-medium">{orderSuccess.leverage}x</span>
+                    </div>
+                    <div className="flex justify-between text-sm pt-2 border-t border-zinc-800">
+                        <span className="text-zinc-400">Total Position</span>
+                        <span className="text-white font-semibold">${orderSuccess.totalPosition.toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <p className="text-xs text-zinc-500">Returning to trade form...</p>
+            </div>
+        );
+    }
+
     return (
-        <div className="p-4 space-y-4 bg-zinc-950 border border-zinc-800 rounded-lg">
+        <div className="p-4 space-y-4 bg-zinc-950 border border-zinc-800 rounded-lg h-full overflow-auto">
             <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-white">Trade</h3>
                 {currentPrice && (

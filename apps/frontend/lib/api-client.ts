@@ -92,6 +92,20 @@ class ApiClient {
         const response = await this.client.get('/api/v1/candles/channels');
         return response.data;
     }
+
+    async getOrderBook(symbol: string, limit: number = 20) {
+        const response = await this.client.get('/api/v1/market/orderbook', {
+            params: { symbol, limit },
+        });
+        return response.data;
+    }
+
+    async getRecentTrades(symbol: string, limit: number = 50) {
+        const response = await this.client.get('/api/v1/market/trades', {
+            params: { symbol, limit },
+        });
+        return response.data;
+    }
 }
 
 export const apiClient = new ApiClient();

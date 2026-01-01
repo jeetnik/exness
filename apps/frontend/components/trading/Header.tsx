@@ -3,6 +3,7 @@
 import { TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import Link from 'next/link';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -13,21 +14,32 @@ import {
 interface HeaderProps {
     onSignIn: () => void;
     onSignUp: () => void;
+    showNav?: boolean;
 }
 
-export function Header({ onSignIn, onSignUp }: HeaderProps) {
+export function Header({ onSignIn, onSignUp, showNav = false }: HeaderProps) {
     const { isAuthenticated, balance, logout } = useAuth();
 
     return (
         <header className="border-b border-zinc-800 bg-zinc-950">
             <div className="px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
-                        <TrendingUp className="w-6 h-6 text-white" />
-                    </div>
-                    <span className="text-2xl font-bold text-white">
-                        TradeFlow
-                    </span>
+                <div className="flex items-center gap-8">
+                    <Link href="/" className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
+                            <TrendingUp className="w-6 h-6 text-white" />
+                        </div>
+                        <span className="text-2xl font-bold text-white">
+                            TradeFlow
+                        </span>
+                    </Link>
+
+                    {showNav && (
+                        <nav className="flex items-center gap-6">
+                            <Link href="/" className="text-white hover:text-zinc-300 transition-colors">
+                                Live Markets
+                            </Link>
+                        </nav>
+                    )}
                 </div>
 
 
