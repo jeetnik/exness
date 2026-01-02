@@ -193,11 +193,21 @@ export function TradingChart({ symbol, timeframe }: any) {
             const candleTime =
                 Math.floor(timestamp / candleDuration) * candleDuration;
 
-            if (
-                !currentCandleRef.current ||
-                currentCandleRef.current.time !== candleTime
-            ) {
-                // New candle
+            const currentTime = currentCandleRef.current
+                ? (typeof currentCandleRef.current.time === 'number'
+                    ? currentCandleRef.current.time
+                    : Number(currentCandleRef.current.time))
+                : 0;
+
+            if (!currentCandleRef.current || currentTime !== candleTime) {
+                if (candleTime < currentTime) {
+                    console.warn('[Chart] Ignoring old data:', {
+                        candleTime,
+                        currentTime,
+                    });
+                    return;
+                }
+
                 currentCandleRef.current = {
                     time: candleTime as Time,
                     open: price,
@@ -206,7 +216,6 @@ export function TradingChart({ symbol, timeframe }: any) {
                     close: price,
                 };
             } else {
-                // Update existing candle
                 currentCandleRef.current.high = Math.max(
                     currentCandleRef.current.high,
                     price
@@ -218,8 +227,11 @@ export function TradingChart({ symbol, timeframe }: any) {
                 currentCandleRef.current.close = price;
             }
 
-            // Use update() instead of setData() for live updates
-            seriesRef.current.update(currentCandleRef.current);
+            try {
+                seriesRef.current.update(currentCandleRef.current);
+            } catch (error) {
+                console.error('[Chart] Error updating candle:', error);
+            }
         };
 
         wsClient.subscribe([symbol], handler);

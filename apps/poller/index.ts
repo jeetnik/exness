@@ -7,12 +7,31 @@ import { producer } from "./lib/producer";
 const tradeStreams = "btcfdusd@trade/ethusdt@trade/usdcusdt@trade/solusdt@trade/btcusdt@trade/ethfdusd@trade/ethusdc@trade/xrpusdc@trade/solfdusd@trade/solusdc@trade";
 const depthStreams = "btcusdt@depth@100ms/ethusdt@depth@100ms/solusdt@depth@100ms/xrpusdc@depth@100ms";
 
-const ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${tradeStreams}/${depthStreams}`);
+let ws: WebSocket;
+let pingInterval: NodeJS.Timeout;
+let reconnectTimeout: NodeJS.Timeout;
+let isReconnecting = false;
+
 consumer('db').catch(console.error);
 console.log("consume is ready!");
 
-ws.on("open", () => {
-    console.log("connection is done!")
+function connectWebSocket() {
+    if (isReconnecting) return;
+
+    ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${tradeStreams}/${depthStreams}`);
+
+    ws.on("open", () => {
+        console.log("WebSocket connection established!");
+        isReconnecting = false;
+
+        if (pingInterval) clearInterval(pingInterval);
+        pingInterval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.ping();
+            }
+        }, 30000);
+    });
+
     ws.on("message", async (data) => {
         try {
             const streamdata = JSON.parse(data.toString()) as stream;
@@ -36,14 +55,35 @@ ws.on("open", () => {
         } catch (error) {
             console.error('Error processing message:', error);
         }
-    })
-})
+    });
 
-ws.on("error",(error)=>{
-    console.error("WebSocket error:", error);
-})
+    ws.on("pong", () => {
+        console.log("Received pong from Binance");
+    });
 
+    ws.on("error", (error) => {
+        console.error("WebSocket error:", error);
+    });
 
-ws.on('close',()=>{
-    console.log("Ws Server closed Gracefully");
+    ws.on('close', () => {
+        console.log("WebSocket connection closed. Reconnecting in 5 seconds...");
+
+        if (pingInterval) clearInterval(pingInterval);
+        if (reconnectTimeout) clearTimeout(reconnectTimeout);
+
+        isReconnecting = true;
+        reconnectTimeout = setTimeout(() => {
+            connectWebSocket();
+        }, 5000);
+    });
+}
+
+connectWebSocket();
+
+process.on('SIGINT', () => {
+    console.log('Shutting down gracefully...');
+    if (pingInterval) clearInterval(pingInterval);
+    if (reconnectTimeout) clearTimeout(reconnectTimeout);
+    if (ws) ws.close();
+    process.exit(0);
 });
