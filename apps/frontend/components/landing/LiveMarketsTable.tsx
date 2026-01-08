@@ -4,19 +4,28 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 
-const cryptoLogos: { [key: string]: string } = {
-    'BTC': '/XTVCBTC--big.svg',
-    'ETH': '/XTVCETH--big.svg',
-    'SOL': '/XTVCSOL--big.svg',
-    'XRP': '/XTVCXRP--big.svg',
-    'MATIC': '/XTVCMATIC--big.svg',
-    'AVAX': '/XTVCAVAX--big.svg',
-    'DOT': '/XTVCDOT--big.svg',
-    'LINK': '/XTVCLINK--big.svg',
-    'UNI': '/XTVCUNI--big.svg',
-    'ATOM': '/XTVCATOM--big.svg',
-    'ADA': '/XTVCADA--big.svg',
-    'DOGE': '/XTVCDOGE--big.svg',
+// Helper function to get crypto logo with fallback chain
+const getCryptoLogo = (symbol: string, apiImageUrl?: string): string => {
+    // Extract base crypto symbol (e.g., BTC from BTCUSDT, ETH from ETHFDUSD)
+    const baseSymbol = symbol.replace(/(USDT|USDC|FDUSD|BUSD)$/, '');
+
+    // Local logo mappings
+    const localLogos: { [key: string]: string } = {
+        'BTC': '/XTVCBTC--big.svg',
+        'ETH': '/XTVCETH--big.svg',
+        'SOL': '/XTVCSOL--big.svg',
+        'XRP': '/XTVCXRP--big.svg',
+        'MATIC': '/XTVCMATIC--big.svg',
+        'AVAX': '/XTVCAVAX--big.svg',
+        'DOT': '/XTVCDOT--big.svg',
+        'LINK': '/XTVCLINK--big.svg',
+        'UNI': '/XTVCUNI--big.svg',
+        'ATOM': '/XTVCATOM--big.svg',
+        'ADA': '/XTVCADA--big.svg',
+        'DOGE': '/XTVCDOGE--big.svg',
+    };
+
+    return localLogos[baseSymbol] || apiImageUrl || `https://via.placeholder.com/32x32.png?text=${baseSymbol}`;
 };
 
 interface Asset {
@@ -119,15 +128,23 @@ export function LiveMarketsTable() {
                                     <td className="py-4 px-6">
                                         <div className="flex items-center gap-3">
                                             <img
-                                                src={cryptoLogos[asset.symbol] || asset.imageUrl}
+                                                src={getCryptoLogo(asset.symbol, asset.imageUrl)}
                                                 alt={asset.name}
                                                 className="w-8 h-8 rounded-full"
-                                                // onError={(e) => {
-                                                //     e.currentTarget.src = `https://via.placeholder.com/32x32.png?text=${asset.symbol.charAt(0)}`;
-                                                // }}
+                                                onError={(e) => {
+                                                    const target = e.currentTarget;
+                                                    // If local logo fails, try API imageUrl
+                                                    if (target.src !== asset.imageUrl && asset.imageUrl) {
+                                                        target.src = asset.imageUrl;
+                                                    } else {
+                                                        // Final fallback to placeholder
+                                                        const baseSymbol = asset.symbol.replace(/(USDT|USDC|FDUSD|BUSD)$/, '');
+                                                        target.src = `https://via.placeholder.com/32x32/1a1a1a/ffffff?text=${baseSymbol}`;
+                                                    }
+                                                }}
                                             />
                                             <div>
-                                                {/* <div className="text-white font-medium">{asset.symbol}</div> */}
+                                                <div className="text-white font-medium">{asset.symbol}</div>
                                                 <div className="text-zinc-500 text-sm">{asset.name}</div>
                                             </div>
                                         </div>

@@ -10,31 +10,61 @@ const depthStreams = "btcusdt@depth@100ms/ethusdt@depth@100ms/solusdt@depth@100m
 let ws: WebSocket;
 let pingInterval: NodeJS.Timeout;
 let reconnectTimeout: NodeJS.Timeout;
+let maxConnectionTimeout: NodeJS.Timeout;
 let isReconnecting = false;
+let isAlive = false;
+let missedPongs = 0;
 
 consumer('db').catch(console.error);
 console.log("consume is ready!");
 
 function connectWebSocket() {
-    if (isReconnecting) return;
+    if (isReconnecting) {
+        console.log('[POLLER] Already reconnecting, skipping...');
+        return;
+    }
 
+    console.log('[POLLER] Initiating WebSocket connection...');
     ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${tradeStreams}/${depthStreams}`);
+    isAlive = false;
+    missedPongs = 0;
 
     ws.on("open", () => {
         console.log("WebSocket connection established!");
         isReconnecting = false;
+        isAlive = true;
+        missedPongs = 0;
 
         if (pingInterval) clearInterval(pingInterval);
         pingInterval = setInterval(() => {
             if (ws.readyState === WebSocket.OPEN) {
+                if (!isAlive) {
+                    missedPongs++;
+                    console.warn(`[POLLER] Missed pong #${missedPongs}`);
+
+                    if (missedPongs >= 3) {
+                        console.error('[POLLER] Connection dead (3 missed pongs). Terminating...');
+                        ws.terminate();
+                        return;
+                    }
+                }
+
+                isAlive = false;
                 ws.ping();
             }
         }, 30000);
+
+        if (maxConnectionTimeout) clearTimeout(maxConnectionTimeout);
+        maxConnectionTimeout = setTimeout(() => {
+            console.log('[POLLER] 23 hours reached. Proactively reconnecting to Binance...');
+            ws.close();
+        }, 23 * 60 * 60 * 1000);
     });
 
     ws.on("message", async (data) => {
         try {
             const streamdata = JSON.parse(data.toString()) as stream;
+            console.log(`[POLLER] Received message on stream: ${streamdata.stream}`);
 
             if (streamdata.stream.includes('@trade')) {
                 const tradeData = streamdata.data as any;
@@ -46,10 +76,12 @@ function connectWebSocket() {
                     p: tradeData.p,
                     q: tradeData.q
                 }
+                console.log(`[POLLER] Publishing to Redis channel: ${dbData.s}, price: ${tradeData.p}`);
                 await pub(dbData.s, JSON.stringify(dbData));
                 await producer('db', JSON.stringify(dbData));
             } else if (streamdata.stream.includes('@depth')) {
                 const depthData = streamdata.data as DepthUpdate;
+                console.log(`[POLLER] Publishing depth data for: ${depthData.s}`);
                 await pub(`${depthData.s}_DEPTH`, JSON.stringify(depthData));
             }
         } catch (error) {
@@ -58,7 +90,9 @@ function connectWebSocket() {
     });
 
     ws.on("pong", () => {
-        console.log("Received pong from Binance");
+        isAlive = true;
+        missedPongs = 0;
+        console.log("Received pong from Binance - connection alive");
     });
 
     ws.on("error", (error) => {
@@ -70,9 +104,16 @@ function connectWebSocket() {
 
         if (pingInterval) clearInterval(pingInterval);
         if (reconnectTimeout) clearTimeout(reconnectTimeout);
+        if (maxConnectionTimeout) clearTimeout(maxConnectionTimeout);
+
+        if (isReconnecting) {
+            console.log('[POLLER] Reconnection already scheduled, skipping...');
+            return;
+        }
 
         isReconnecting = true;
         reconnectTimeout = setTimeout(() => {
+            isReconnecting = false;
             connectWebSocket();
         }, 5000);
     });
@@ -84,6 +125,7 @@ process.on('SIGINT', () => {
     console.log('Shutting down gracefully...');
     if (pingInterval) clearInterval(pingInterval);
     if (reconnectTimeout) clearTimeout(reconnectTimeout);
+    if (maxConnectionTimeout) clearTimeout(maxConnectionTimeout);
     if (ws) ws.close();
     process.exit(0);
 });

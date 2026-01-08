@@ -5,6 +5,9 @@ import { AuthProvider } from "@/hooks/useAuth";
 export const metadata: Metadata = {
   title: "TradeFlow - Professional Trading Platform",
   description: "Advanced cryptocurrency and futures trading platform with real-time charts and analytics",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export const viewport: Viewport = {
