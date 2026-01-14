@@ -17,9 +17,13 @@ interface Trade {
     pnl?: number;
 }
 
-export function OrdersPanel() {
+interface OrdersPanelProps {
+    defaultTab?: 'open' | 'history';
+}
+
+export function OrdersPanel({ defaultTab = 'open' }: OrdersPanelProps) {
     const { isAuthenticated, refreshBalance } = useAuth();
-    const [activeTab, setActiveTab] = useState<'open' | 'history'>('open');
+    const [activeTab, setActiveTab] = useState<'open' | 'history'>(defaultTab);
     const [openTrades, setOpenTrades] = useState<Trade[]>([]);
     const [closedTrades, setClosedTrades] = useState<Trade[]>([]);
     const [loading, setLoading] = useState(false);
@@ -81,21 +85,19 @@ export function OrdersPanel() {
             <div className="flex border-b border-zinc-800 flex-shrink-0">
                 <button
                     onClick={() => setActiveTab('open')}
-                    className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
-                        activeTab === 'open'
+                    className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === 'open'
                             ? 'text-white bg-zinc-900/50 border-b-2 border-white'
                             : 'text-zinc-400 hover:text-white'
-                    }`}
+                        }`}
                 >
                     Open Positions ({openTrades.length})
                 </button>
                 <button
                     onClick={() => setActiveTab('history')}
-                    className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
-                        activeTab === 'history'
+                    className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === 'history'
                             ? 'text-white bg-zinc-900/50 border-b-2 border-white'
                             : 'text-zinc-400 hover:text-white'
-                    }`}
+                        }`}
                 >
                     History
                 </button>
@@ -123,11 +125,10 @@ export function OrdersPanel() {
                                                 {trade.asset}
                                             </span>
                                         )}
-                                        <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
-                                            trade.type === 'buy'
+                                        <span className={`px-2 py-0.5 text-xs font-semibold rounded ${trade.type === 'buy'
                                                 ? 'bg-green-500/20 text-green-500'
                                                 : 'bg-red-500/20 text-red-500'
-                                        }`}>
+                                            }`}>
                                             {trade.type.toUpperCase()}
                                         </span>
                                         <span className="text-xs text-zinc-400">
@@ -172,9 +173,8 @@ export function OrdersPanel() {
                                         {trade.unrealizedPnl !== undefined && (
                                             <div>
                                                 <div className="text-zinc-400">Unrealized P&L</div>
-                                                <div className={`font-semibold ${
-                                                    trade.unrealizedPnl >= 0 ? 'text-green-500' : 'text-red-500'
-                                                }`}>
+                                                <div className={`font-semibold ${trade.unrealizedPnl >= 0 ? 'text-green-500' : 'text-red-500'
+                                                    }`}>
                                                     {trade.unrealizedPnl >= 0 ? '+' : ''}${(trade.unrealizedPnl / 100).toFixed(2)}
                                                 </div>
                                             </div>
@@ -182,9 +182,8 @@ export function OrdersPanel() {
                                         {trade.pnl !== undefined && (
                                             <div>
                                                 <div className="text-zinc-400">P&L</div>
-                                                <div className={`font-semibold ${
-                                                    trade.pnl >= 0 ? 'text-green-500' : 'text-red-500'
-                                                }`}>
+                                                <div className={`font-semibold ${trade.pnl >= 0 ? 'text-green-500' : 'text-red-500'
+                                                    }`}>
                                                     {trade.pnl >= 0 ? '+' : ''}${(trade.pnl / 100).toFixed(2)}
                                                 </div>
                                             </div>

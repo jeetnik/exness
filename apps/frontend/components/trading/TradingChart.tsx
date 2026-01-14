@@ -26,6 +26,9 @@ export function TradingChart({ symbol, timeframe }: any) {
     const chartRef = useRef<IChartApi | null>(null);
     const seriesRef = useRef<any>(null);
     const currentCandleRef = useRef<CandlestickData | null>(null);
+    const lastHistoricalTimeRef = useRef<number>(0);
+    // Flag to prevent WebSocket updates while loading historical data
+    const isLoadingRef = useRef<boolean>(false);
 
     // Initialize chart once
     useEffect(() => {
@@ -51,7 +54,7 @@ export function TradingChart({ symbol, timeframe }: any) {
             autoSize: true,
         });
 
-        // ✅ v5 CORRECT WAY
+
         const candleSeries = chart.addSeries(CandlestickSeries, {
             upColor: "#22c55e",
             downColor: "#ef4444",
@@ -91,19 +94,26 @@ export function TradingChart({ symbol, timeframe }: any) {
     useEffect(() => {
         if (!seriesRef.current) return;
 
+        // IMPORTANT: Reset refs synchronously BEFORE async fetch to prevent race conditions
+        console.log(`[Chart] Resetting refs for new timeframe: ${timeframe}`);
+        currentCandleRef.current = null;
+        lastHistoricalTimeRef.current = 0;
+        isLoadingRef.current = true;
+
         const loadHistoricalData = async () => {
             try {
                 console.log(`[Chart] Fetching data for ${symbol} ${timeframe}`);
 
                 const now = Math.floor(Date.now() / 1000);
+                // Time ranges optimized for good default zoom (showing ~100-200 candles)
                 const timeRanges: Record<string, number> = {
-                    "1m": 29 * 24 * 60 * 60,
-                    "5m": 89 * 24 * 60 * 60,
-                    "15m": 179 * 24 * 60 * 60,
-                    "30m": 364 * 24 * 60 * 60,
-                    "1h": 2 * 364 * 24 * 60 * 60,
-                    "1d": 5 * 364 * 24 * 60 * 60,
-                    "1w": 10 * 364 * 24 * 60 * 60,
+                    "1m": 4 * 60 * 60,          // 4 hours = ~240 candles
+                    "5m": 12 * 60 * 60,         // 12 hours = ~144 candles
+                    "15m": 2 * 24 * 60 * 60,    // 2 days = ~192 candles
+                    "30m": 4 * 24 * 60 * 60,    // 4 days = ~192 candles
+                    "1h": 7 * 24 * 60 * 60,     // 7 days = ~168 candles
+                    "1d": 180 * 24 * 60 * 60,   // 180 days = ~180 candles
+                    "1w": 2 * 365 * 24 * 60 * 60, // 2 years = ~104 candles
                 };
 
                 const range = timeRanges[timeframe] || 24 * 60 * 60;
@@ -121,7 +131,7 @@ export function TradingChart({ symbol, timeframe }: any) {
                 console.log(`[Chart] Received response:`, response);
 
                 if (response.candles && response.candles.length > 0) {
-                    const chartData: CandlestickData[] = response.candles
+                    const sortedData: CandlestickData[] = response.candles
                         .map((candle: CandleFromAPI) => {
                             const divisor = Math.pow(10, candle.decimal);
                             return {
@@ -132,7 +142,7 @@ export function TradingChart({ symbol, timeframe }: any) {
                                 close: candle.close / divisor,
                             };
                         })
-                        .sort((a, b) => {
+                        .sort((a: CandlestickData, b: CandlestickData) => {
                             const timeA =
                                 typeof a.time === "number"
                                     ? a.time
@@ -144,13 +154,45 @@ export function TradingChart({ symbol, timeframe }: any) {
                             return timeA - timeB;
                         });
 
-                    console.log(`[Chart] Processed ${chartData.length} candles`);
+                    // Deduplicate: keep only the last entry for each timestamp
+                    const deduplicatedMap = new Map<number, CandlestickData>();
+                    for (const candle of sortedData) {
+                        const t = typeof candle.time === "number" ? candle.time : Number(candle.time);
+                        deduplicatedMap.set(t, candle);
+                    }
+                    const chartData = Array.from(deduplicatedMap.values()).sort((a, b) => {
+                        const timeA = typeof a.time === "number" ? a.time : Number(a.time);
+                        const timeB = typeof b.time === "number" ? b.time : Number(b.time);
+                        return timeA - timeB;
+                    });
+
+                    console.log(`[Chart] Processed ${chartData.length} candles (after dedup)`);
                     console.log(`[Chart] Sample candle:`, chartData[0]);
 
                     if (seriesRef.current) {
                         seriesRef.current.setData(chartData);
-                        chartRef.current?.timeScale().fitContent();
+
+                        // Scroll to show recent data with ~100 visible candles
+                        const timeScale = chartRef.current?.timeScale();
+                        if (timeScale && chartData.length > 0) {
+                            // Show the last ~100 candles (or all if less than 100)
+                            const visibleCandles = Math.min(100, chartData.length);
+                            const fromIndex = chartData.length - visibleCandles;
+                            timeScale.setVisibleLogicalRange({
+                                from: fromIndex,
+                                to: chartData.length - 1,
+                            });
+                        }
                         console.log("[Chart] Data loaded successfully");
+
+                        // Initialize currentCandleRef with the last candle
+                        if (chartData.length > 0) {
+                            const lastCandle = chartData[chartData.length - 1];
+                            currentCandleRef.current = { ...lastCandle };
+                            lastHistoricalTimeRef.current = typeof lastCandle.time === "number"
+                                ? lastCandle.time
+                                : Number(lastCandle.time);
+                        }
                     }
                 } else {
                     console.log("[Chart] No candles in response");
@@ -161,6 +203,10 @@ export function TradingChart({ symbol, timeframe }: any) {
             } catch (err: any) {
                 console.error("[Chart] Error fetching chart data:", err);
                 console.error("[Chart] Error details:", err.response?.data);
+            } finally {
+                // Allow live updates after historical data is loaded
+                isLoadingRef.current = false;
+                console.log("[Chart] Loading complete, live updates enabled");
             }
         };
 
@@ -184,22 +230,43 @@ export function TradingChart({ symbol, timeframe }: any) {
         const candleDuration = timeframeSeconds[timeframe] || 60;
 
         const handler = (channel: string, marketData: MarketData) => {
-            if (!seriesRef.current) return;
+            // Skip updates while loading historical data
+            if (isLoadingRef.current) {
+                return;
+            }
+
+            if (!seriesRef.current || !currentCandleRef.current) {
+                return;
+            }
 
             const price = parseFloat(marketData.p);
+            if (isNaN(price)) {
+                console.warn('[Chart] Invalid price received:', marketData.p);
+                return;
+            }
+
             const timestamp = Math.floor(
                 new Date(marketData.T).getTime() / 1000
             );
+            if (isNaN(timestamp) || timestamp <= 0) {
+                console.warn('[Chart] Invalid timestamp received:', marketData.T);
+                return;
+            }
+
             const candleTime =
                 Math.floor(timestamp / candleDuration) * candleDuration;
 
-            const currentTime = currentCandleRef.current
-                ? (typeof currentCandleRef.current.time === 'number'
-                    ? currentCandleRef.current.time
-                    : Number(currentCandleRef.current.time))
-                : 0;
+            const currentTime = typeof currentCandleRef.current.time === 'number'
+                ? currentCandleRef.current.time
+                : Number(currentCandleRef.current.time);
 
-            if (!currentCandleRef.current || currentTime !== candleTime) {
+            if (currentTime !== candleTime) {
+                // Skip if this candle is older than our historical data
+                if (candleTime < lastHistoricalTimeRef.current) {
+                    return;
+                }
+
+                // Skip if this is older than the current candle (out-of-order data)
                 if (candleTime < currentTime) {
                     console.warn('[Chart] Ignoring old data:', {
                         candleTime,
@@ -208,6 +275,7 @@ export function TradingChart({ symbol, timeframe }: any) {
                     return;
                 }
 
+                // Create a new candle
                 currentCandleRef.current = {
                     time: candleTime as Time,
                     open: price,
@@ -216,21 +284,19 @@ export function TradingChart({ symbol, timeframe }: any) {
                     close: price,
                 };
             } else {
-                currentCandleRef.current.high = Math.max(
-                    currentCandleRef.current.high,
-                    price
-                );
-                currentCandleRef.current.low = Math.min(
-                    currentCandleRef.current.low,
-                    price
-                );
-                currentCandleRef.current.close = price;
+                // Update the existing candle
+                currentCandleRef.current = {
+                    ...currentCandleRef.current,
+                    high: Math.max(currentCandleRef.current.high, price),
+                    low: Math.min(currentCandleRef.current.low, price),
+                    close: price,
+                };
             }
 
             try {
                 seriesRef.current.update(currentCandleRef.current);
             } catch (error) {
-                console.error('[Chart] Error updating candle:', error);
+                console.error('[Chart] Error updating candle:', error, currentCandleRef.current);
             }
         };
 
@@ -238,7 +304,6 @@ export function TradingChart({ symbol, timeframe }: any) {
 
         return () => {
             wsClient.unsubscribe([symbol], handler);
-            currentCandleRef.current = null;
         };
     }, [symbol, timeframe]);
 

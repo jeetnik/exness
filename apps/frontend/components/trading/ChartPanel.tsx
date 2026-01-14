@@ -20,7 +20,7 @@ interface ChartPanelProps {
 }
 
 export function ChartPanel({ selectedSymbol, onSymbolChange }: ChartPanelProps) {
-    const [timeframe, setTimeframe] = useState('5m');
+    const [timeframe, setTimeframe] = useState('1m');
 
     return (
         <div className="h-full flex flex-col bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden">
@@ -41,11 +41,10 @@ export function ChartPanel({ selectedSymbol, onSymbolChange }: ChartPanelProps) 
                                 <DropdownMenuItem
                                     key={pair}
                                     onClick={() => onSymbolChange(pair)}
-                                    className={`${
-                                        selectedSymbol === pair
+                                    className={`${selectedSymbol === pair
                                             ? 'bg-zinc-800 text-white'
                                             : 'text-zinc-300 hover:bg-zinc-800'
-                                    }`}
+                                        }`}
                                 >
                                     <span className="font-medium text-sm">{pair}</span>
                                 </DropdownMenuItem>
@@ -60,11 +59,10 @@ export function ChartPanel({ selectedSymbol, onSymbolChange }: ChartPanelProps) 
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setTimeframe(tf)}
-                                className={`h-7 px-2.5 text-xs font-medium transition-colors ${
-                                    timeframe === tf
+                                className={`h-7 px-2.5 text-xs font-medium transition-colors ${timeframe === tf
                                         ? 'bg-zinc-800 text-white'
                                         : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
-                                }`}
+                                    }`}
                             >
                                 {tf}
                             </Button>

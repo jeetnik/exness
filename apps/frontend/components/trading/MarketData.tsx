@@ -25,10 +25,18 @@ interface Trade {
 
 interface MarketDataProps {
     symbol: string;
+    view?: 'orderbook' | 'trades';
 }
 
-export function MarketData({ symbol }: MarketDataProps) {
+export function MarketData({ symbol, view }: MarketDataProps) {
     const [activeTab, setActiveTab] = useState<'orderbook' | 'trades'>('orderbook');
+
+    useEffect(() => {
+        if (view) {
+            setActiveTab(view);
+        }
+    }, [view]);
+
     const [orderBook, setOrderBook] = useState<OrderBookData>({ bids: [], asks: [] });
     const [trades, setTrades] = useState<Trade[]>([]);
     const [loading, setLoading] = useState(true);
@@ -94,21 +102,19 @@ export function MarketData({ symbol }: MarketDataProps) {
             <div className="flex border-b border-zinc-800 flex-shrink-0">
                 <button
                     onClick={() => setActiveTab('orderbook')}
-                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                        activeTab === 'orderbook'
+                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'orderbook'
                             ? 'bg-zinc-900 text-white border-b-2 border-blue-500'
                             : 'text-zinc-400 hover:text-white'
-                    }`}
+                        }`}
                 >
                     Order Book
                 </button>
                 <button
                     onClick={() => setActiveTab('trades')}
-                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                        activeTab === 'trades'
+                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'trades'
                             ? 'bg-zinc-900 text-white border-b-2 border-blue-500'
                             : 'text-zinc-400 hover:text-white'
-                    }`}
+                        }`}
                 >
                     Trades
                 </button>
@@ -193,9 +199,8 @@ export function MarketData({ symbol }: MarketDataProps) {
                                 key={trade.id}
                                 className="flex text-xs px-4 py-1.5 hover:bg-zinc-900/50 items-center"
                             >
-                                <div className={`flex-1 text-left font-medium ${
-                                    trade.isBuyerMaker ? 'text-red-500' : 'text-green-500'
-                                }`}>
+                                <div className={`flex-1 text-left font-medium ${trade.isBuyerMaker ? 'text-red-500' : 'text-green-500'
+                                    }`}>
                                     <span className="inline-flex items-center gap-1">
                                         {trade.isBuyerMaker ? (
                                             <TrendingDown className="w-3 h-3" />
