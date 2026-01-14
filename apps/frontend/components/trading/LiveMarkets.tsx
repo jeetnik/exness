@@ -3,6 +3,31 @@
 import { useEffect, useState } from 'react';
 import { useMarketData } from '@/hooks/useMarketData';
 
+// Helper function to get crypto logo
+const getCryptoLogo = (symbol: string): string => {
+    // Extract base crypto symbol (e.g., BTC from BTCUSDT)
+    const baseSymbol = symbol.replace(/(USDT|USDC|FDUSD|BUSD)$/, '');
+
+    // Map to the files in public folder
+    const logoMap: { [key: string]: string } = {
+        'BTC': '/XTVCBTC--big.svg',
+        'ETH': '/XTVCETH--big.svg',
+        'SOL': '/XTVCSOL--big.svg',
+        'XRP': '/XTVCXRP--big.svg',
+        'BNB': '/XTVCBNB--big.svg', // Assuming this might exist or fallback
+        'ADA': '/XTVCADA--big.svg',
+        'MATIC': '/XTVCMATIC--big.svg',
+        'AVAX': '/XTVCAVAX--big.svg',
+        'DOT': '/XTVCDOT--big.svg',
+        'OINK': '/XTVCLINK--big.svg',
+        'UNI': '/XTVCUNI--big.svg',
+        'ATOM': '/XTVCATOM--big.svg',
+        'DOGE': '/XTVCDOGE--big.svg',
+    };
+
+    return logoMap[baseSymbol] || `https://via.placeholder.com/32x32.png?text=${baseSymbol}`;
+};
+
 interface LiveMarketsProps {
     symbols: string[];
     selectedSymbol: string;
@@ -37,25 +62,33 @@ export function LiveMarkets({ symbols, selectedSymbol, onSymbolClick }: LiveMark
                 </div>
             </div>
 
-            <div className="divide-y divide-zinc-800 max-h-[400px] overflow-y-auto">
+            <div className="divide-y divide-zinc-800 max-h-[800px] overflow-y-auto">
                 {symbols.map(symbol => {
                     const data = prices.get(symbol);
                     const isSelected = symbol === selectedSymbol;
+                    const logoSrc = getCryptoLogo(symbol);
 
                     return (
                         <div
                             key={symbol}
                             onClick={() => onSymbolClick(symbol)}
-                            className={`px-4 py-3 cursor-pointer transition-colors ${
-                                isSelected
-                                    ? 'bg-zinc-800/50'
-                                    : 'hover:bg-zinc-900/50'
-                            }`}
+                            className={`px-4 py-3 cursor-pointer transition-colors ${isSelected
+                                ? 'bg-zinc-800/50'
+                                : 'hover:bg-zinc-900/50'
+                                }`}
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white text-xs font-bold">
-                                        {symbol.slice(0, 2)}
+                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+                                        <img
+                                            src={logoSrc}
+                                            alt={symbol}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                e.currentTarget.parentElement!.innerText = symbol.slice(0, 2);
+                                            }}
+                                        />
                                     </div>
                                     <div>
                                         <div className="text-sm font-semibold text-white">{symbol}</div>
@@ -71,9 +104,8 @@ export function LiveMarkets({ symbols, selectedSymbol, onSymbolClick }: LiveMark
                                             <div className="text-sm font-mono font-semibold text-white">
                                                 ${data.price.toFixed(2)}
                                             </div>
-                                            <div className={`text-xs font-medium ${
-                                                data.change >= 0 ? 'text-green-500' : 'text-red-500'
-                                            }`}>
+                                            <div className={`text-xs font-medium ${data.change >= 0 ? 'text-green-500' : 'text-red-500'
+                                                }`}>
                                                 {data.change >= 0 ? '+' : ''}{data.change.toFixed(2)}%
                                             </div>
                                         </>

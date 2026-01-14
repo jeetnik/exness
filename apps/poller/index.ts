@@ -4,8 +4,8 @@ import { pub } from "./lib/publisher";
 import { consumer } from "./lib/consumer";
 import { producer } from "./lib/producer";
 
-const tradeStreams = "btcfdusd@trade/ethusdt@trade/usdcusdt@trade/solusdt@trade/btcusdt@trade/ethfdusd@trade/ethusdc@trade/xrpusdc@trade/solfdusd@trade/solusdc@trade";
-const depthStreams = "btcusdt@depth@100ms/ethusdt@depth@100ms/solusdt@depth@100ms/xrpusdc@depth@100ms";
+const tradeStreams = "btcfdusd@trade/ethusdt@trade/usdcusdt@trade/solusdt@trade/btcusdt@trade/ethfdusd@trade/ethusdc@trade/xrpusdc@trade/solfdusd@trade/solusdc@trade/bnbusdt@trade/xrpusdt@trade/adausdt@trade";
+const depthStreams = "btcusdt@depth@100ms/ethusdt@depth@100ms/solusdt@depth@100ms/xrpusdc@depth@100ms/bnbusdt@depth@100ms/xrpusdt@depth@100ms/adausdt@depth@100ms";
 
 let ws: WebSocket;
 let pingInterval: NodeJS.Timeout;

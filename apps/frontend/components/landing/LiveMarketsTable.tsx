@@ -84,8 +84,8 @@ export function LiveMarketsTable() {
         return () => clearInterval(interval);
     }, []);
 
-    const handleRowClick = (symbol: string) => {
-        router.push(`/trade?symbol=${symbol}`);
+    const handleRowClick = () => {
+        router.push('/trade');
     };
 
     if (loading) {
@@ -122,7 +122,7 @@ export function LiveMarketsTable() {
                             return (
                                 <tr
                                     key={asset.symbol}
-                                    onClick={() => handleRowClick(asset.symbol)}
+                                    onClick={() => handleRowClick()}
                                     className="border-b border-zinc-800 hover:bg-zinc-900 cursor-pointer transition-colors"
                                 >
                                     <td className="py-4 px-6">

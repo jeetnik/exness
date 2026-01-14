@@ -82,12 +82,10 @@ export function TradePanel({ symbol, currentPrice, onAuthRequired }: TradePanelP
     if (orderSuccess) {
         return (
             <div className="p-6 bg-zinc-950 border border-zinc-800 rounded-lg h-full overflow-auto flex flex-col items-center justify-center space-y-4">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                    orderSuccess.type === 'buy' ? 'bg-green-500/20' : 'bg-red-500/20'
-                }`}>
-                    <CheckCircle className={`w-10 h-10 ${
-                        orderSuccess.type === 'buy' ? 'text-green-500' : 'text-red-500'
-                    }`} />
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${orderSuccess.type === 'buy' ? 'bg-green-500/20' : 'bg-red-500/20'
+                    }`}>
+                    <CheckCircle className={`w-10 h-10 ${orderSuccess.type === 'buy' ? 'text-green-500' : 'text-red-500'
+                        }`} />
                 </div>
 
                 <div className="text-center space-y-2">
@@ -146,14 +144,57 @@ export function TradePanel({ symbol, currentPrice, onAuthRequired }: TradePanelP
                 </div>
 
                 <div>
-                    <Label className="text-xs text-zinc-400">Leverage</Label>
-                    <Input
-                        type="number"
-                        value={leverage}
-                        onChange={(e) => setLeverage(e.target.value)}
-                        className="mt-1 bg-zinc-900 border-zinc-800 text-white"
-                        placeholder="10"
-                    />
+                    <div className="flex items-center justify-between mb-2">
+                        <Label className="text-xs text-zinc-400">Leverage</Label>
+                        <span className="text-lg font-bold text-white">{leverage}x</span>
+                    </div>
+
+                    {/* Leverage Slider */}
+                    <div className="relative mb-3">
+                        <input
+                            type="range"
+                            min="1"
+                            max="100"
+                            value={leverage}
+                            onChange={(e) => setLeverage(e.target.value)}
+                            className="w-full h-2 bg-zinc-800 rounded-full appearance-none cursor-pointer
+                                       [&::-webkit-slider-thumb]:appearance-none
+                                       [&::-webkit-slider-thumb]:w-5
+                                       [&::-webkit-slider-thumb]:h-5
+                                       [&::-webkit-slider-thumb]:rounded-full
+                                       [&::-webkit-slider-thumb]:bg-white
+                                       [&::-webkit-slider-thumb]:shadow-lg
+                                       [&::-webkit-slider-thumb]:shadow-white/30
+                                       [&::-webkit-slider-thumb]:cursor-pointer
+                                       [&::-webkit-slider-thumb]:transition-transform
+                                       [&::-webkit-slider-thumb]:hover:scale-110
+                                       [&::-moz-range-thumb]:w-5
+                                       [&::-moz-range-thumb]:h-5
+                                       [&::-moz-range-thumb]:rounded-full
+                                       [&::-moz-range-thumb]:bg-white
+                                       [&::-moz-range-thumb]:border-0
+                                       [&::-moz-range-thumb]:cursor-pointer"
+                            style={{
+                                background: `linear-gradient(to right, #ffffff 0%, #ffffff ${parseInt(leverage)}%, #27272a ${parseInt(leverage)}%, #27272a 100%)`
+                            }}
+                        />
+                    </div>
+
+                    {/* Preset Buttons */}
+                    <div className="grid grid-cols-6 gap-1">
+                        {[2, 5, 10, 25, 50, 100].map((val) => (
+                            <button
+                                key={val}
+                                onClick={() => setLeverage(val.toString())}
+                                className={`py-1.5 text-xs font-medium rounded transition-all ${parseInt(leverage) === val
+                                    ? 'bg-white text-black shadow-lg shadow-white/20'
+                                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                                    }`}
+                            >
+                                {val}x
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-800">
