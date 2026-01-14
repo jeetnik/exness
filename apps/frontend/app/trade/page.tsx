@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/trading/Header';
 import { TradingSidebar } from '@/components/trading/TradingSidebar';
@@ -12,11 +12,10 @@ import { WalletPanel } from '@/components/trading/WalletPanel';
 import { RecentTrades } from '@/components/trading/RecentTrades';
 import { AuthModal } from '@/components/trading/AuthModal';
 import { useMarketData } from '@/hooks/useMarketData';
-import { apiClient } from '@/lib/api-client';
 
 const TRADING_PAIRS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT'];
 
-export default function TradingPage() {
+function TradingPageContent() {
     const searchParams = useSearchParams();
     const symbolFromUrl = searchParams.get('symbol');
 
@@ -125,5 +124,26 @@ export default function TradingPage() {
                 initialMode={authMode}
             />
         </div>
+    );
+}
+
+// Loading fallback component
+function TradingPageLoading() {
+    return (
+        <div className="h-screen flex items-center justify-center bg-black">
+            <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-2 border-zinc-700 border-t-white mx-auto mb-4"></div>
+                <p className="text-zinc-400">Loading trading platform...</p>
+            </div>
+        </div>
+    );
+}
+
+// Main export wrapped in Suspense
+export default function TradingPage() {
+    return (
+        <Suspense fallback={<TradingPageLoading />}>
+            <TradingPageContent />
+        </Suspense>
     );
 }
