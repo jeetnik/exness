@@ -10,7 +10,7 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 COPY packages ./packages
 
-RUN bun install --production
+RUN rm -rf bun.lock node_modules && bun install --production 
 
 FROM oven/bun:1.3.3-alpine AS runner
 
