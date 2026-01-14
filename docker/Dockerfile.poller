@@ -10,7 +10,7 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 COPY packages ./packages
 
-RUN bun install --frozen-lockfile --production
+RUN bun install --production
 
 FROM oven/bun:1.3.3-alpine AS runner
 
