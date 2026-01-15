@@ -9,14 +9,12 @@ import marketRouter from "./router/market";
 const port = process.env.PORT || 4000;
 const app = express();
 
-// CORS configuration - allow frontend
+// CORS configuration - allow all origins (for Cloudflare tunnel)
 app.use(cors({
-    origin: [
-        'https://exness-frontend.vercel.app',
-        process.env.FRONTEND_URL || 'http://localhost:3000',
-        'http://localhost:3001'
-    ],
-    credentials: true
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 

@@ -1,135 +1,156 @@
-# Turborepo starter
+# Paper X Trading Platform
 
-This Turborepo starter is maintained by the Turborepo core team.
+A real-time paper trading platform for cryptocurrency with live market data from Binance.
 
-## Using this example
+## Screenshots
 
-Run the following command:
+### Landing Page
+![Landing Page](docs/images/landing-page.png)
 
-```sh
-npx create-turbo@latest
-```
+### Trade Page
+![Trade Page](docs/images/trade-page.png)
 
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+## Project Structure
 
 ```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+exeness/
+├── apps/
+│   ├── frontend/          # Next.js frontend (deployed to Vercel)
+│   ├── server/            # Express.js REST API server
+│   ├── ws/                # WebSocket server for real-time data
+│   └── poller/            # Binance data poller service
+├── packages/
+│   ├── db/                # Prisma database schema & client
+│   ├── types/             # Shared TypeScript types
+│   └── typescript-config/ # Shared TypeScript configs
+├── docker/
+│   ├── Dockerfile.server  # Server Docker image
+│   ├── Dockerfile.ws      # WebSocket Docker image
+│   ├── Dockerfile.poller  # Poller Docker image
+│   └── Dockerfile.web     # Frontend Docker image
+├── docker-compose.yml     # Local development compose
+└── docker-compose.prod.yml # Production compose
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+## Tech Stack
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+- **Frontend**: Next.js 15, React 19, TailwindCSS
+- **Backend**: Express.js, Bun runtime
+- **Database**: PostgreSQL (users/trades), TimescaleDB (market data)
+- **Cache**: Redis
+- **Real-time**: WebSocket
+- **Data Source**: Binance WebSocket API
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+---
 
-### Develop
+## Local Development
 
-To develop all apps and packages, run the following command:
+### Prerequisites
+- [Bun](https://bun.sh/) installed
+- Docker & Docker Compose installed
 
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+### Step 1: Install Dependencies
+```bash
+bun install
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+### Step 2: Start Databases (Docker)
+```bash
+docker compose up timescaledb postgres redis -d
 ```
 
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+### Step 3: Setup Database
+```bash
+cd packages/db
+bunx prisma migrate dev
+bunx prisma generate
+cd ../..
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+### Step 4: Start All Services
+```bash
+# Terminal 1 - Poller (fetches Binance data)
+cd apps/poller && bun run dev
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+# Terminal 2 - Server (API)
+cd apps/server && bun run dev
 
+# Terminal 3 - WebSocket
+cd apps/ws && bun run dev
+
+# Terminal 4 - Frontend
+cd apps/frontend && bun run dev
 ```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+Or use Turbo to start all at once:
+```bash
+bun run dev
 ```
 
-## Useful Links
+### Access
+- Frontend: http://localhost:3000
+- API: http://localhost:4000
+- WebSocket: ws://localhost:8080
 
-Learn more about the power of Turborepo:
+---
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+## Docker Development
+
+### Start All Services
+```bash
+docker compose up -d
+```
+
+### Stop All Services
+```bash
+docker compose down
+```
+
+### View Logs
+```bash
+docker compose logs -f
+docker logs exeness-server
+docker logs exeness-poller
+docker logs exeness-ws
+```
+
+### Rebuild After Code Changes
+```bash
+docker compose build
+docker compose up -d
+```
+
+---
+
+##  Environment Variables
+
+### Frontend (.env.local)
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+NEXT_PUBLIC_WS_URL=ws://localhost:8080
+```
+
+### Server
+```env
+DATABASE_URL=postgresql://postgres:mypassword@localhost:5432/exeness
+PORT=4000
+JWT_SECRET=your-secret-key
+```
+
+### Poller
+```env
+DATABASE_URL=postgresql://postgres:mypassword@localhost:5432/exeness
+REDIS_URL=redis://localhost:6379
+```
+
+### WebSocket
+```env
+REDIS_URL=redis://localhost:6379
+PORT=8080
+```
+
+---
+
+## License
+
+MIT
