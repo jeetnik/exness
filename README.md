@@ -2,14 +2,6 @@
 
 A real-time paper trading platform for cryptocurrency with live market data from Binance.
 
-## Screenshots
-
-### Landing Page
-![Landing Page](docs/images/landing-page.png)
-
-### Trade Page
-![Trade Page](docs/images/trade-page.png)
-
 ## Project Structure
 
 ```
@@ -150,6 +142,16 @@ PORT=8080
 ```
 
 ---
+## Architecture
+![alt text](<Screenshot 2026-01-15 at 23.52.54.png>)
+
+### Landing Page
+
+![alt text](<Screenshot 2026-01-15 at 23.28.26.png>)
+
+![alt text](<Screenshot 2026-01-15 at 23.29.02.png>)
+### Trade Page
+![alt text](<Screenshot 2026-01-15 at 23.29.33.png>)
 
 ## License
 
