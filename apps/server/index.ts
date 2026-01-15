@@ -11,7 +11,11 @@ const app = express();
 
 // CORS configuration - allow frontend
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000'||'http://localhost:3001',
+    origin: [
+        'https://exness-frontend.vercel.app',
+        process.env.FRONTEND_URL || 'http://localhost:3000',
+        'http://localhost:3001'
+    ],
     credentials: true
 }));
 app.use(express.json());
