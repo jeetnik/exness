@@ -2,6 +2,25 @@
 
 A real-time paper trading platform for cryptocurrency with live market data from Binance.
 
+
+
+---
+## Architecture
+<img width="1277" height="639" alt="Screenshot 2026-01-15 at 23 57 42" src="https://github.com/user-attachments/assets/232cbc71-4925-4b4c-a220-636428746c8f" />
+
+
+### Landing Page
+
+<img width="1436" height="812" alt="Screenshot 2026-01-15 at 23 58 05" src="https://github.com/user-attachments/assets/1ec94e33-ec91-468c-a170-b371a81b17a5" />
+
+<img width="1436" height="817" alt="Screenshot 2026-01-15 at 23 58 25" src="https://github.com/user-attachments/assets/911f6e5a-abcb-488d-b833-462b148b08f6" />
+
+
+### Trade Page
+<img width="1440" height="810" alt="Screenshot 2026-01-15 at 23 59 55" src="https://github.com/user-attachments/assets/bcba2bbb-50c2-4526-9d2b-727d6fe957cf" />
+
+
+
 ## Project Structure
 
 ```
@@ -140,22 +159,6 @@ REDIS_URL=redis://localhost:6379
 REDIS_URL=redis://localhost:6379
 PORT=8080
 ```
-
----
-## Architecture
-<img width="1277" height="639" alt="Screenshot 2026-01-15 at 23 57 42" src="https://github.com/user-attachments/assets/232cbc71-4925-4b4c-a220-636428746c8f" />
-
-
-### Landing Page
-
-<img width="1436" height="812" alt="Screenshot 2026-01-15 at 23 58 05" src="https://github.com/user-attachments/assets/1ec94e33-ec91-468c-a170-b371a81b17a5" />
-
-<img width="1436" height="817" alt="Screenshot 2026-01-15 at 23 58 25" src="https://github.com/user-attachments/assets/911f6e5a-abcb-488d-b833-462b148b08f6" />
-
-
-### Trade Page
-<img width="1440" height="810" alt="Screenshot 2026-01-15 at 23 59 55" src="https://github.com/user-attachments/assets/bcba2bbb-50c2-4526-9d2b-727d6fe957cf" />
-
 
 ## License
 
